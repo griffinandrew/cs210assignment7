@@ -26,7 +26,7 @@ typedef struct Set{
 
 set *my_cache;
 
-//blocks here is e3ssetianlly a cache line
+//blocks here is essetianlly a cache line
 
 void create_cache(int set_bits, int assoc, int offset_bits){
     sets = 1 << set_bits; //left shift same as mult by 2
@@ -58,6 +58,48 @@ void create_cache(int set_bits, int assoc, int offset_bits){
 }
 
 
+
+
+void read_trace_file(int trace) //this will need to be called after t in switch statement
+{
+
+
+
+ while(1)
+    {
+
+       // opt = getopt(argc, argv, "vhs:E:b:t:"); //looks at argv and tries to match it with one of those things if found opt gives letter that first found
+        
+
+        fscanf(trace, " %c %s %d", operation, address, space); //space is included in front bc I should be ignored 
+
+        //if (opt == -1)
+        //{
+        //    break;
+       // }
+
+        switch(operation)
+        {
+            case 'L':
+                //set_bits = atoi(optarg);
+                //call to function called load 
+                break;
+            case 'M':
+                //associativity = atoi(optarg);
+                //call to function data modify
+                break;
+            case 'S':
+                //offset_bits = atoi(optarg);
+                //call a fucntion to data store
+                //store
+                break;
+            default:
+                break;
+        }
+
+    }
+
+}
 
 
 
@@ -114,7 +156,7 @@ int main(int argc, char **argv)  //int is number of args char is strings part of
 
 
 //need function to scan and opt through trace file
-//function to modify caache
+//function to modify cache
 //insert 
 //modify
 //delete
