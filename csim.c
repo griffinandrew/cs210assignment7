@@ -10,12 +10,13 @@ int sets;
 int assoc;
 int bytes;
 
-
+//2d array of structs 
+//dont need to stroe data bc it is simulator 
 
 typedef struct Block{
     int tag;
     int valid_bit;
-    int lri; //time stamp
+    int lru; //time stamp
 } block;
 
 typedef struct Set{
@@ -25,6 +26,7 @@ typedef struct Set{
 
 set *my_cache;
 
+//blocks here is e3ssetianlly a cache line
 
 void create_cache(int set_bits, int assoc, int offset_bits){
     sets = 1 << set_bits; //left shift same as mult by 2
@@ -43,14 +45,14 @@ void create_cache(int set_bits, int assoc, int offset_bits){
     for (i= 0; i < sets; i++)
     {
         my_cache[i].index = i;
-        my_cache[i].my_set = (block *) malloc(assoc * sizeof(block)); //allocate my set within eac hset
+        my_cache[i].my_set = (block *) malloc(assoc * sizeof(block)); //allocate my set within each set of size block
 
 
         for (j = 0; j < assoc; j ++) //each block within set intialize there starting information
         {
             my_cache[i].my_set[j].tag = -1;
             my_cache[i].my_set[j].valid_bit = -1;
-            my_cache[i].my_set[j].lri = -1;
+            my_cache[i].my_set[j].lru = -1;
         }
     }
 }
@@ -75,11 +77,13 @@ int main(int argc, char **argv)  //int is number of args char is strings part of
         opt = getopt(argc, argv, "vhs:E:b:t:"); //looks at argv and tries to match it with one of those things if found opt gives letter that first found
         
 
-        if (opt == -1){
+        if (opt == -1)
+        {
             break;
         }
 
-        switch(opt){
+        switch(opt)
+        {
             case 's':
                 set_bits = atoi(optarg); //opt agrv var created wtih get opt, this is string, atoi turns strong to int if possible
                 break;
@@ -107,3 +111,13 @@ int main(int argc, char **argv)  //int is number of args char is strings part of
     printSummary(0, 0, 0);
     return 0;
 }
+
+
+//need function to scan and opt through trace file
+//function to modify caache
+//insert 
+//modify
+//delete
+//mechanism to keep tack of hits misses and evictions
+
+//need to figure out based on addrerss where it should go and based on size how much size it should take up
