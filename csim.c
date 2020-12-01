@@ -1,5 +1,5 @@
-//Griffin Heyrich
-//u42992446
+//Griffin Heyrich gheyrich@bu.edu
+//U42992446
 #include "cachelab.h"
 #include <stdio.h>
 #include<stdlib.h>
@@ -13,14 +13,14 @@ int bytes;
 //2d array of structs 
 //dont need to stroe data bc it is simulator 
 
-typedef struct Block{
+typedef struct Block{ //block = line
     int tag;
     int valid_bit;
     int lru; //time stamp
 } block;
 
-typedef struct Set{
-    unsigned int index;
+typedef struct Set{ //pointe to line 
+    unsigned int index; 
     block *my_set; //array of sets in struct
 } set;
 
@@ -60,36 +60,33 @@ void create_cache(int set_bits, int assoc, int offset_bits){
 
 
 
-void read_trace_file(int trace) //this will need to be called after t in switch statement
+void read_trace_file(char* trace_func) //this will need to be called after t in switch statement
 {
+//FILE* use fopen with r to read the data
+FILE* trace_p = fopen(trace_func, "r");
+
+    if (trace_p == NULL){
+        exit(EXIT_FAILURE);
+    }
+
 
 
 
  while(1)
     {
 
-       // opt = getopt(argc, argv, "vhs:E:b:t:"); //looks at argv and tries to match it with one of those things if found opt gives letter that first found
+        fscanf(trace_p, " %c %s", operation, address); //space is included in front bc I should be ignored 
+
         
-
-        fscanf(trace, " %c %s %d", operation, address, space); //space is included in front bc I should be ignored 
-
-        //if (opt == -1)
-        //{
-        //    break;
-       // }
-
         switch(operation)
         {
             case 'L':
-                //set_bits = atoi(optarg);
                 //call to function called load 
                 break;
             case 'M':
-                //associativity = atoi(optarg);
                 //call to function data modify
                 break;
             case 'S':
-                //offset_bits = atoi(optarg);
                 //call a fucntion to data store
                 //store
                 break;
@@ -101,7 +98,38 @@ void read_trace_file(int trace) //this will need to be called after t in switch 
 
 }
 
+void load(char address, int space)
+{
 
+
+
+}
+
+
+
+
+
+void store(char address, int space)
+{
+    
+
+
+}
+
+
+void modify(char address, int space)
+{
+    
+
+
+}
+
+
+void interp_address(char add){
+    address = atoi(add);
+
+    //my_cache[].
+}
 
 int main(int argc, char **argv)  //int is number of args char is strings part of that arg list (list of strings bascvially) 
 {
@@ -156,7 +184,7 @@ int main(int argc, char **argv)  //int is number of args char is strings part of
 
 
 //need function to scan and opt through trace file
-//function to modify cache
+//functions to modify cache
 //insert 
 //modify
 //delete
