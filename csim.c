@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include<stdlib.h>
 #include <getopt.h>
+#include <time.h>
 
 
 int sets;
@@ -30,6 +31,16 @@ typedef struct Set{ //pointe to line
 
 set *my_cache;
 
+
+
+//took this out of main to use in other fucntions
+int set_bits = 0;
+int associativity = 0;
+int offset_bits = 0;
+char *trace_file = NULL;
+
+
+
 //blocks here is essetianlly a cache line
 
 void create_cache(int set_bits, int assoc, int offset_bits){
@@ -40,7 +51,7 @@ void create_cache(int set_bits, int assoc, int offset_bits){
     printf("%d, %d, %d\n", sets, assoc, bytes);
     printf("my_cache: %p\n", my_cache);
 
-    my_cache = (set *)malloc(sets* sizeof(set) ); //alloc space for cache
+    my_cache = (set *)malloc(sets * sizeof(set) ); //alloc space for cache
     printf("my_cache: %p\n", my_cache);
 
 
@@ -110,9 +121,6 @@ void load(char address)
 }
 
 
-
-
-
 void store(char address)
 {
     
@@ -131,24 +139,32 @@ void modify(char address)
 
 int interp_address(char add){
     int tag;
-    int address = atoi(add);
+    //int address;
+    address = atoi(add);
 
-    tag = address >> (b+s);
+    tag = address >> (offset_bits + set_bits);
 
-    unsigned int set_indx = address >> b & ((1 << s) -1);
-    
-    my_cache[set_indx];
+    unsigned int set_indx = address >> offset_bits & ((1 << set_bits) -1);
 
-    for(int i =0; i < assoc; i++){
-        if (my_cache[set_indx].my_set[i].valid){
-            if((my_cache[set_indx].my_set[i].tag == tag){
+    //should i set my_set index to set index?
+
+
+    for(int i =0; i < associativity; i++){
+        if (my_cache[set_indx].my_set[i].valid_bit){
+            if(my_cache[set_indx].my_set[i].tag == tag){
                 hits++;
-                return 0;
-
+                my_cache[set_indx].my_set[i].lru = 1;
+                return 0; //or return hits?
             }
         }
     }
     miss++;
+    for(int j = 0; j < associativity; j++){
+        if(my_cache[set_indx].my_set[j].lru ){ //if was most rtesently used evict it 
+
+
+        }
+    }
 
 
 
@@ -157,10 +173,10 @@ int interp_address(char add){
 
 int main(int argc, char **argv)  //int is number of args char is strings part of that arg list (list of strings bascvially) 
 {
-    int set_bits = 0;
-    int associativity =0;
-    int offset_bits = 0;
-    char *trace_file = NULL;
+   // int set_bits = 0;
+   // int associativity = 0;
+   // int offset_bits = 0;
+   // char *trace_file = NULL;
 
 
     char opt;
