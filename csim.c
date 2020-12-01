@@ -10,13 +10,17 @@ int sets;
 int assoc;
 int bytes;
 
+int hits = 0;
+int miss = 0;
+int evictions =0;
+
 //2d array of structs 
 //dont need to stroe data bc it is simulator 
 
 typedef struct Block{ //block = line
     int tag;
     int valid_bit;
-    int lru; //time stamp
+    int lru; //time stamp //lru will be 1 for most recent used?
 } block;
 
 typedef struct Set{ //pointe to line 
@@ -66,17 +70,17 @@ void read_trace_file(char* trace_func) //this will need to be called after t in 
 FILE* trace_p = fopen(trace_func, "r");
 
     if (trace_p == NULL){
+        printf("file failed to open\n");
         exit(EXIT_FAILURE);
     }
 
 
+    char address;
+    char operation;
 
-
- while(1)
-    {
-
-        fscanf(trace_p, " %c %s", operation, address); //space is included in front bc I should be ignored 
-
+    while(fscanf(trace_p, " %c %s", &operation, &address) > 0){ //space is included in front bc I should be ignored 
+//use fscan or gets or getline 
+//need to tell it to read until EOF or EOL
         
         switch(operation)
         {
@@ -95,21 +99,10 @@ FILE* trace_p = fopen(trace_func, "r");
         }
 
     }
-
+    fclose(trace_p);
 }
 
-void load(char address, int space)
-{
-
-
-
-}
-
-
-
-
-
-void store(char address, int space)
+void load(char address)
 {
     
 
@@ -117,7 +110,10 @@ void store(char address, int space)
 }
 
 
-void modify(char address, int space)
+
+
+
+void store(char address)
 {
     
 
@@ -125,10 +121,38 @@ void modify(char address, int space)
 }
 
 
-void interp_address(char add){
-    address = atoi(add);
+void modify(char address)
+{
+    
 
-    //my_cache[].
+
+}
+
+
+int interp_address(char add){
+    int tag;
+    int address = atoi(add);
+
+    tag = address >> (b+s);
+
+    unsigned int set_indx = address >> b & ((1 << s) -1);
+    
+    my_cache[set_indx];
+
+    for(int i =0; i < assoc; i++){
+        if (my_cache[set_indx].my_set[i].valid){
+            if((my_cache[set_indx].my_set[i].tag == tag){
+                hits++;
+                return 0;
+
+            }
+        }
+    }
+    miss++;
+
+
+
+
 }
 
 int main(int argc, char **argv)  //int is number of args char is strings part of that arg list (list of strings bascvially) 
