@@ -32,10 +32,10 @@ typedef struct Set{ //pointe to line
 
 set *my_cache;
 
-int interp_address(uint64_t add);
-void load(uint64_t address);
-void modify(uint64_t address);
-void store(uint64_t address);
+int interp_address(char add);
+void load(char address);
+void modify(char address);
+void store(char address);
 
 //took this out of main to use in other fucntions
 int set_bits = 0;
@@ -98,7 +98,7 @@ FILE* trace_p = fopen(trace_func, "r");
     while(fscanf(trace_p, " %c %s", &operation, &address) > 0){ //space is included in front bc I should be ignored 
 //use fscan or gets or getline 
 //need to tell it to read until EOF or EOL
-    address = (uint64_t) address;
+   // address = (uint64_t) address;
 
         switch(operation)
         {
@@ -119,7 +119,7 @@ FILE* trace_p = fopen(trace_func, "r");
     fclose(trace_p);
 }
 
-void load(uint64_t address)
+void load(char address)
 {
     
     interp_address(address);
@@ -127,7 +127,7 @@ void load(uint64_t address)
 }
 
 
-void store(uint64_t address)
+void store(char address)
 {
 
     interp_address(address);
@@ -135,7 +135,7 @@ void store(uint64_t address)
 }
 
 
-void modify(uint64_t address)
+void modify(char address)
 {
     
     interp_address(address);
@@ -143,10 +143,10 @@ void modify(uint64_t address)
 }
 
 
-int interp_address(uint64_t add){ //m,aybe i should break this up
+int interp_address(char add){ //m,aybe i should break this up
     int tag;
-    //int address;
-    int address = atoi((char*)add);
+    (char*)add = (char*)add; //need to solve this 
+    int address = atoi(add);
 
     tag = address >> (offset_bits + set_bits);
 
