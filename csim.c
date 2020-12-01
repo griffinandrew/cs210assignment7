@@ -35,10 +35,10 @@ set *my_cache;
 
 
 //took this out of main to use in other fucntions //could be cause of seg fault
-int set_bits = 0;
-int associativity = 0;
-int offset_bits = 0;
-char *trace_file = NULL;
+int set_bit;
+int ass; //if you change these to be globals and then send those locals in main to be stored for ref by other programs that might be the move
+int off_bits;
+char *trace_file;
 
 
 
@@ -152,9 +152,9 @@ int interp_address(char add){ //m,aybe i should break this up
     char *addy = &add; //need to solve this 
     int address = atoi(addy);
 
-    tag = address >> (offset_bits + set_bits);
+    tag = address >> (off_bits + set_bit);
 
-    unsigned int set_indx = address >> offset_bits & ((1 << set_bits) -1);
+    unsigned int set_indx = address >> off_bits & ((1 << set_bit) -1);
 
     //should i set my_set index to set index?
 
@@ -163,7 +163,7 @@ int interp_address(char add){ //m,aybe i should break this up
     int bl_evict = 0;
 
 
-    for(int i =0; i < associativity; i++){ //sets or assoc
+    for(int i =0; i < ass; i++){ //sets or assoc
         if (my_cache[set_indx].my_set[i].valid_bit){
             if(my_cache[set_indx].my_set[i].tag == tag){
                 hits++;
@@ -213,10 +213,10 @@ int interp_address(char add){ //m,aybe i should break this up
 
 int main(int argc, char **argv)  //int is number of args char is strings part of that arg list (list of strings bascvially) 
 {
-   // int set_bits = 0;
-   // int associativity = 0;
-   // int offset_bits = 0;
-   // char *trace_file = NULL;
+    int set_bits = 0;
+    int associativity = 0;
+    int offset_bits = 0;
+    char *trace_file = NULL;
 
 
     char opt;
@@ -236,12 +236,15 @@ int main(int argc, char **argv)  //int is number of args char is strings part of
         {
             case 's':
                 set_bits = atoi(optarg); //opt agrv var created wtih get opt, this is string, atoi turns strong to int if possible
+                set_bit = set_bits;
                 break;
             case 'E':
                 associativity = atoi(optarg);
+                ass = associativity;
                 break;
             case 'b':
                 offset_bits = atoi(optarg);
+                off_bits = offset_bits;
                 break;
             case 't':
                 trace_file = optarg;
