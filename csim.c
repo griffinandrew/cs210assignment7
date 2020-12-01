@@ -31,7 +31,10 @@ typedef struct Set{ //pointe to line
 
 set *my_cache;
 
-
+int interp_address(char *add);
+void load(char *address);
+void modify(char *address);
+void store(char *address);
 
 //took this out of main to use in other fucntions
 int set_bits = 0;
@@ -77,6 +80,8 @@ void create_cache(int set_bits, int assoc, int offset_bits){
 
 void read_trace_file(char* trace_func) //this will need to be called after t in switch statement
 {
+
+    
 //FILE* use fopen with r to read the data
 FILE* trace_p = fopen(trace_func, "r");
 
@@ -92,18 +97,18 @@ FILE* trace_p = fopen(trace_func, "r");
     while(fscanf(trace_p, " %c %s", &operation, &address) > 0){ //space is included in front bc I should be ignored 
 //use fscan or gets or getline 
 //need to tell it to read until EOF or EOL
-        
+
         switch(operation)
         {
             case 'L':
-                //call to function called load 
+                load((char*)address);
                 break;
             case 'M':
-                //call to function data modify
+                modify((char*)address);
                 break;
             case 'S':
-                //call a fucntion to data store
-                //store
+                store((char*)address);
+
                 break;
             default:
                 break;
@@ -113,34 +118,34 @@ FILE* trace_p = fopen(trace_func, "r");
     fclose(trace_p);
 }
 
-void load(char address)
+void load(char* address)
 {
     
-
+    interp_address(address);
 
 }
 
 
-void store(char address)
+void store(char* address)
 {
-    
 
+    interp_address(address);
 
 }
 
 
-void modify(char address)
+void modify(char* address)
 {
     
-
+    interp_address(address);
 
 }
 
 
-int interp_address(char add){
+int interp_address(char* add){ //m,aybe i should break this up
     int tag;
     //int address;
-    address = atoi(add);
+    int address = atoi(add);
 
     tag = address >> (offset_bits + set_bits);
 
@@ -161,6 +166,9 @@ int bl_evict = 0;
                 my_cache[set_indx].my_set[i].lru = 1;
                 return 0; //or return hits?
             }
+
+            
+            my_cache[set_indx].my_set[i].lru++; //i think need to incr so no prob with other
             if(my_cache[set_indx].my_set[i].lru > my_cache[set_indx].my_set[bl_evict].lru){
                 bl_evict = i;
             }
@@ -181,7 +189,7 @@ int bl_evict = 0;
        
        
         my_cache[set_indx].my_set[bl_empty].tag = tag;
-        my_cache[set_indx].my_set[bl_empty].valid_bit = valid_bit;
+        my_cache[set_indx].my_set[bl_empty].valid_bit = 1; //one to avoid error message
         my_cache[set_indx].my_set[bl_empty].lru = 1;
         
         return 1; 
@@ -192,6 +200,8 @@ int bl_evict = 0;
         my_cache[set_indx].my_set[bl_evict].lru = 1;
 
         evictions++;
+
+        return 2; //bc miss and eviction
     }
 
 
@@ -243,6 +253,8 @@ int main(int argc, char **argv)  //int is number of args char is strings part of
     printf("%d, %d, %d, %s\n", set_bits, associativity, offset_bits, trace_file);
 
     create_cache(set_bits, associativity, offset_bits);
+
+    read_trace_file(trace_file);
 
     printSummary(0, 0, 0);
     return 0;
