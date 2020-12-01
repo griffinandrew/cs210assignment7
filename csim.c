@@ -38,7 +38,7 @@ set *my_cache;
 int set_bit;
 int ass; //if you change these to be globals and then send those locals in main to be stored for ref by other programs that might be the move
 int off_bits;
-char *trace_file;
+//char *tr_file;
 
 
 
@@ -81,14 +81,14 @@ void create_cache(int set_bits, int assoc, int offset_bits){
 
 
 
-void read_trace_file() //this will need to be called after t in switch statement
+void read_trace_file(char *trace) //this will need to be called after t in switch statement
 {
 //char* trace_func = trace_file;
-    if(trace_file == NULL){
+    if(trace == NULL){
         printf("BADDDDDDDD");
     }
 //FILE* use fopen with r to read the data
-FILE* trace_p = fopen(trace_file, "r");
+    FILE* trace_p = fopen(trace, "r");
 
     if (trace_p == NULL){
         printf("file failed to open\n");
@@ -161,16 +161,15 @@ int interp_address(char add){ //m,aybe i should break this up
 //need to consider empty block case and how to best use lru
     int bl_empty = -1;
     int bl_evict = 0;
+    int i;
 
-
-    for(int i =0; i < ass; i++){ //sets or assoc
+    for(i =0; i < ass; i++){ //sets or assoc
         if (my_cache[set_indx].my_set[i].valid_bit){
             if(my_cache[set_indx].my_set[i].tag == tag){
                 hits++;
                 my_cache[set_indx].my_set[i].lru = 1;
                 return 0; //or return hits?
             }
-
             
             my_cache[set_indx].my_set[i].lru++; //i think need to incr so no prob with other
             if(my_cache[set_indx].my_set[i].lru >= my_cache[set_indx].my_set[bl_evict].lru){
@@ -248,6 +247,7 @@ int main(int argc, char **argv)  //int is number of args char is strings part of
                 break;
             case 't':
                 trace_file = optarg;
+                
                 break;
             default:
                 break;
