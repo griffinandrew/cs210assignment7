@@ -148,6 +148,11 @@ int interp_address(char add){
 
     //should i set my_set index to set index?
 
+//need to consider empty block case and how to best use lru
+int bl_empty = -1;
+int bl_evict = 0;
+
+
 
     for(int i =0; i < associativity; i++){
         if (my_cache[set_indx].my_set[i].valid_bit){
@@ -156,17 +161,38 @@ int interp_address(char add){
                 my_cache[set_indx].my_set[i].lru = 1;
                 return 0; //or return hits?
             }
+            if(my_cache[set_indx].my_set[i].lru > my_cache[set_indx].my_set[bl_evict].lru){
+                bl_evict = i;
+            }
+        }
+        else{
+            bl_empty = i;
         }
     }
     miss++;
-    for(int j = 0; j < associativity; j++){
-        if(my_cache[set_indx].my_set[j].lru ){ //if was most rtesently used evict it 
+   // for(int j = 0; j < associativity; j++){
+    //    if(my_cache[set_indx].my_set[j].lru ){ //if was most rtesently used evict it 
 
 
-        }
+     //   }
+    //}
+
+    if(bl_empty != -1){
+       
+       
+        my_cache[set_indx].my_set[bl_empty].tag = tag;
+        my_cache[set_indx].my_set[bl_empty].valid_bit = valid_bit;
+        my_cache[set_indx].my_set[bl_empty].lru = 1;
+        
+        return 1; 
     }
+    else{
 
+        my_cache[set_indx].my_set[bl_evict].tag = tag;
+        my_cache[set_indx].my_set[bl_evict].lru = 1;
 
+        evictions++;
+    }
 
 
 }
