@@ -145,8 +145,8 @@ void modify(char address)
 
 int interp_address(char add){ //m,aybe i should break this up
     int tag;
-    (char*)add = (char*)add; //need to solve this 
-    int address = atoi(add);
+    char *addy = &add; //need to solve this 
+    int address = atoi(addy);
 
     tag = address >> (offset_bits + set_bits);
 
@@ -155,9 +155,8 @@ int interp_address(char add){ //m,aybe i should break this up
     //should i set my_set index to set index?
 
 //need to consider empty block case and how to best use lru
-int bl_empty = -1;
-int bl_evict = 0;
-
+    int bl_empty = -1;
+    int bl_evict = 0;
 
 
     for(int i =0; i < associativity; i++){
@@ -257,7 +256,7 @@ int main(int argc, char **argv)  //int is number of args char is strings part of
 
     read_trace_file(trace_file);
 
-    printSummary(0, 0, 0);
+    printSummary(hits, miss, evictions);
     return 0;
 }
 
