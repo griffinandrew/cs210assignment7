@@ -2,9 +2,10 @@
 //U42992446
 #include "cachelab.h"
 #include <stdio.h>
-#include<stdlib.h>
+#include <stdlib.h>
 #include <getopt.h>
 #include <time.h>
+#include <stdint.h>
 
 
 int sets;
@@ -31,10 +32,10 @@ typedef struct Set{ //pointe to line
 
 set *my_cache;
 
-int interp_address(char *add);
-void load(char *address);
-void modify(char *address);
-void store(char *address);
+int interp_address(uint64_t add);
+void load(uint64_t address);
+void modify(uint64_t address);
+void store(uint64_t address);
 
 //took this out of main to use in other fucntions
 int set_bits = 0;
@@ -97,18 +98,18 @@ FILE* trace_p = fopen(trace_func, "r");
     while(fscanf(trace_p, " %c %s", &operation, &address) > 0){ //space is included in front bc I should be ignored 
 //use fscan or gets or getline 
 //need to tell it to read until EOF or EOL
+    address = (uint64_t) address;
 
         switch(operation)
         {
             case 'L':
-                load((char*)address);
+                load(address);
                 break;
             case 'M':
-                modify((char*)address);
+                modify(address);
                 break;
             case 'S':
-                store((char*)address);
-
+                store(address);
                 break;
             default:
                 break;
@@ -118,7 +119,7 @@ FILE* trace_p = fopen(trace_func, "r");
     fclose(trace_p);
 }
 
-void load(char* address)
+void load(uint64_t address)
 {
     
     interp_address(address);
@@ -126,7 +127,7 @@ void load(char* address)
 }
 
 
-void store(char* address)
+void store(uint64_t address)
 {
 
     interp_address(address);
@@ -134,7 +135,7 @@ void store(char* address)
 }
 
 
-void modify(char* address)
+void modify(uint64_t address)
 {
     
     interp_address(address);
@@ -142,10 +143,10 @@ void modify(char* address)
 }
 
 
-int interp_address(char* add){ //m,aybe i should break this up
+int interp_address(uint64_t add){ //m,aybe i should break this up
     int tag;
     //int address;
-    int address = atoi(add);
+    int address = atoi((char*)add);
 
     tag = address >> (offset_bits + set_bits);
 
@@ -169,7 +170,7 @@ int bl_evict = 0;
 
             
             my_cache[set_indx].my_set[i].lru++; //i think need to incr so no prob with other
-            if(my_cache[set_indx].my_set[i].lru > my_cache[set_indx].my_set[bl_evict].lru){
+            if(my_cache[set_indx].my_set[i].lru >= my_cache[set_indx].my_set[bl_evict].lru){
                 bl_evict = i;
             }
         }
