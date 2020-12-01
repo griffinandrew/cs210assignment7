@@ -8,8 +8,8 @@
 #include <stdint.h>
 
 
-int sets;
-int assoc;
+int sets; //number of sets
+int assoc; //allocation
 int bytes;
 
 int hits = 0;
@@ -32,18 +32,20 @@ typedef struct Set{ //pointe to line
 
 set *my_cache;
 
-int interp_address(char add);
-void load(char address);
-void modify(char address);
-void store(char address);
 
-//took this out of main to use in other fucntions
+
+//took this out of main to use in other fucntions //could be cause of seg fault
 int set_bits = 0;
 int associativity = 0;
 int offset_bits = 0;
 char *trace_file = NULL;
 
 
+
+int interp_address(char add);
+void load(char address);
+void modify(char address);
+void store(char address);
 
 //blocks here is essetianlly a cache line
 
@@ -75,16 +77,18 @@ void create_cache(int set_bits, int assoc, int offset_bits){
         }
     }
 }
+//going to need to dealloc this stuff
 
 
 
-
-void read_trace_file(char* trace_func) //this will need to be called after t in switch statement
+void read_trace_file() //this will need to be called after t in switch statement
 {
-
-    
+//char* trace_func = trace_file;
+    if(trace_file == NULL){
+        printf("BADDDDDDDD");
+    }
 //FILE* use fopen with r to read the data
-FILE* trace_p = fopen(trace_func, "r");
+FILE* trace_p = fopen(trace_file, "r");
 
     if (trace_p == NULL){
         printf("file failed to open\n");
@@ -92,7 +96,7 @@ FILE* trace_p = fopen(trace_func, "r");
     }
 
 
-    char address;
+    char address; //WAIT SHOULD BE ADDRESS[]?
     char operation;
 
     while(fscanf(trace_p, " %c %s", &operation, &address) > 0){ //space is included in front bc I should be ignored 
@@ -159,7 +163,7 @@ int interp_address(char add){ //m,aybe i should break this up
     int bl_evict = 0;
 
 
-    for(int i =0; i < associativity; i++){
+    for(int i =0; i < associativity; i++){ //sets or assoc
         if (my_cache[set_indx].my_set[i].valid_bit){
             if(my_cache[set_indx].my_set[i].tag == tag){
                 hits++;
