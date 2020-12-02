@@ -167,11 +167,11 @@ void interp_address(unsigned long long address){ //m,aybe i should break this up
 //need to consider empty block case and how to best use lru
     int bl_empty = -1;
     int bl_evict = 0;
-    int i;
+    int i,j;
 
-
+//this needs to be slightly diff for modify
     for(i =0; i < ass; i++){ //sets or assoc
-        if (my_cache[set_indx].my_set[i].valid_bit){
+        if (my_cache[set_indx].my_set[i].valid_bit == 1){
             if(my_cache[set_indx].my_set[i].tag == tag){ //if hit do that stuff
                 hits++;
                 //counter++;
@@ -182,18 +182,22 @@ void interp_address(unsigned long long address){ //m,aybe i should break this up
             }
             //counter++;
             //my_cache[set_indx].my_set[i].lru = counter; //i think need to incr so no prob with other
-            if(my_cache[set_indx].my_set[i].lru >= my_cache[set_indx].my_set[bl_evict].lru){ //not hit look for lru to evict
-                bl_evict = i;
+            if(my_cache[set_indx].my_set[bl_evict].lru < my_cache[set_indx].my_set[i].lru ){ //not hit look for lru to evict //lowest is lru, store corridantes set index and i to be recalled for easy access
+                bl_evict = i; ///fix eviction, then modify 
             }
             //else if(!my_cache[set_indx].my_set[i].valid_bit && !my_cache[set_indx].my_set[i].lru){
             //    bl_empty = i;
             //}
        // }
+        }
         else if (bl_empty == -1){
            bl_empty = i;
         }
-        }
+        
     }
+   // for(j = 0; j < ass; j++){
+
+    //}
     //miss++;
    // for(int j = 0; j < associativity; j++){
     //    if(my_cache[set_indx].my_set[j].lru ){ //if was most rtesently used evict it 
@@ -202,7 +206,7 @@ void interp_address(unsigned long long address){ //m,aybe i should break this up
      //   }
     //}
 
-    if(bl_empty != -1){
+    if(bl_empty > -1){ 
        
         miss++;
         //counter++;
@@ -214,19 +218,21 @@ void interp_address(unsigned long long address){ //m,aybe i should break this up
         //return 1; 
     }
     
-    else{
+    else{ //set is full need to evict
         miss++;
-        
         my_cache[set_indx].my_set[bl_evict].tag = tag;
         my_cache[set_indx].my_set[bl_evict].lru = counter;
         counter++;
         evictions++;
-        return;
+        //return;
         //return 2; //bc miss and eviction
     }
 
 
 }
+
+
+
 
 int main(int argc, char **argv)  //int is number of args char is strings part of that arg list (list of strings bascvially) 
 {
