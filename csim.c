@@ -6,6 +6,7 @@
 #include <getopt.h>
 #include <time.h>
 #include <stdint.h>
+#include <limits.h>
 
 
 int sets; //number of sets
@@ -167,22 +168,22 @@ void interp_address(unsigned long long address){ //m,aybe i should break this up
 //need to consider empty block case and how to best use lru
     int bl_empty = -1;
     int bl_evict = 0;
-    int i,j;
+    int i, j;
 
 //this needs to be slightly diff for modify
     for(i =0; i < ass; i++){ //sets or assoc
         if (my_cache[set_indx].my_set[i].valid_bit == 1){
             if(my_cache[set_indx].my_set[i].tag == tag){ //if hit do that stuff
                 hits++;
-                //counter++;
-                my_cache[set_indx].my_set[i].lru = counter; //or counter 
                 counter++;
+                my_cache[set_indx].my_set[i].lru = counter; //or counter 
+                //counter++;
                 //return 0; //or return hits?
                 return;
             }
             //counter++;
             //my_cache[set_indx].my_set[i].lru = counter; //i think need to incr so no prob with other
-            if(my_cache[set_indx].my_set[bl_evict].lru < my_cache[set_indx].my_set[i].lru ){ //not hit look for lru to evict //lowest is lru, store corridantes set index and i to be recalled for easy access
+       /*     if(my_cache[set_indx].my_set[bl_evict].lru <= my_cache[set_indx].my_set[i].lru ){ //not hit look for lru to evict //lowest is lru, store corridantes set index and i to be recalled for easy access
                 bl_evict = i; ///fix eviction, then modify 
             }
             //else if(!my_cache[set_indx].my_set[i].valid_bit && !my_cache[set_indx].my_set[i].lru){
@@ -193,11 +194,21 @@ void interp_address(unsigned long long address){ //m,aybe i should break this up
         else if (bl_empty == -1){
            bl_empty = i;
         }
-        
+        */
+        }
     }
-   // for(j = 0; j < ass; j++){
+    miss++;
+    lru_to_evict = INT_MAX; //just so it saves it for first case
+    for(j = 0; j < ass; j++){
+        if(my_cache[set_indx].my_set[j].lru  < lru_to_evict){
+            bl_evict = j;
+            lru_to_evict = my_cache[set_indx].my_set[j].lru;
+        }
+    }
 
-    //}
+
+
+
     //miss++;
    // for(int j = 0; j < associativity; j++){
     //    if(my_cache[set_indx].my_set[j].lru ){ //if was most rtesently used evict it 
