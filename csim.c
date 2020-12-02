@@ -88,7 +88,7 @@ void read_trace_file(char *trace) //this will need to be called after t in switc
         printf("BADDDDDDDD");
     }
 //FILE* use fopen with r to read the data
-    FILE* trace_p = fopen(trace, "r");
+    FILE* trace_p = fopen(trace, "r"); //why is this failing
 
     if (trace_p == NULL){
         printf("file failed to open\n");
@@ -96,10 +96,11 @@ void read_trace_file(char *trace) //this will need to be called after t in switc
     }
 
 
-    char address; //WAIT SHOULD BE ADDRESS[]?
+    char address; //WAIT SHOULD BE ADDRESS[]?    //wait address should be unsigned long long 
     char operation;
+    int size;
 
-    while(fscanf(trace_p, " %c %s", &operation, &address) > 0){ //space is included in front bc I should be ignored 
+    while(fscanf(trace_p, " %c %c,%d\n", &operation, &address, &size) > 0){ //space is included in front bc I should be ignored 
 //use fscan or gets or getline 
 //need to tell it to read until EOF or EOL
    // address = (uint64_t) address;
@@ -261,6 +262,7 @@ int main(int argc, char **argv)  //int is number of args char is strings part of
 
     create_cache(set_bits, associativity, offset_bits);
 
+    printf("%d, %d, %d, %s\n", set_bits, associativity, offset_bits, trace_file);
     read_trace_file(trace_file);
 
     printSummary(hits, miss, evictions);
