@@ -16,6 +16,10 @@ int hits = 0;
 int miss = 0;
 int evictions =0;
 
+
+int counter = 0; //update lru with value of counter 
+//to evict go throiugh step block aby blovk and evict smallest one 
+
 //2d array of structs 
 //dont need to stroe data bc it is simulator 
 
@@ -42,10 +46,10 @@ int off_bits;
 
 
 
-int interp_address(char add);
-void load(char address);
-void modify(char address);
-void store(char address);
+void interp_address(unsigned long long address);
+void load(unsigned long long address);
+void modify(unsigned long long address);
+void store(unsigned long long address);
 
 //blocks here is essetianlly a cache line
 
@@ -96,11 +100,11 @@ void read_trace_file(char *trace) //this will need to be called after t in switc
     }
 
 
-    char address; //WAIT SHOULD BE ADDRESS[]?    //wait address should be unsigned long long 
+    unsigned long long address; //WAIT SHOULD BE ADDRESS[]?    //wait address should be unsigned long long 
     char operation;
     int size;
 
-    while(fscanf(trace_p, " %c %c,%d\n", &operation, &address, &size) > 0){ //space is included in front bc I should be ignored 
+    while(fscanf(trace_p, " %c %llu,%d\n", &operation, &address, &size) > 0){ //space is included in front bc I should be ignored 
 //use fscan or gets or getline 
 //need to tell it to read until EOF or EOL
    // address = (uint64_t) address;
@@ -112,6 +116,7 @@ void read_trace_file(char *trace) //this will need to be called after t in switc
                 break;
             case 'M':
                 modify(address);
+                //hits++;
                 break;
             case 'S':
                 store(address);
@@ -124,7 +129,7 @@ void read_trace_file(char *trace) //this will need to be called after t in switc
     fclose(trace_p);
 }
 
-void load(char address)
+void load(unsigned long long address)
 {
     
     interp_address(address);
@@ -132,7 +137,7 @@ void load(char address)
 }
 
 
-void store(char address)
+void store(unsigned long long address)
 {
 
     interp_address(address);
@@ -140,7 +145,7 @@ void store(char address)
 }
 
 
-void modify(char address)
+void modify(unsigned long long address)
 {
     
     interp_address(address);
@@ -148,14 +153,14 @@ void modify(char address)
 }
 
 
-int interp_address(char add){ //m,aybe i should break this up
+void interp_address(unsigned long long address){ //m,aybe i should break this up
     int tag;
-    char *addy = &add; //need to solve this 
-    int address = atoi(addy);
+    //char *addy = &add; //need to solve this 
+    //int address = atoi(addy);
 
     tag = address >> (off_bits + set_bit);
 
-    unsigned int set_indx = address >> off_bits & ((1 << set_bit) -1);
+    unsigned int set_indx = (address >> off_bits) & ((1 << set_bit) -1);
 
     //should i set my_set index to set index?
 
@@ -164,24 +169,32 @@ int interp_address(char add){ //m,aybe i should break this up
     int bl_evict = 0;
     int i;
 
+
     for(i =0; i < ass; i++){ //sets or assoc
         if (my_cache[set_indx].my_set[i].valid_bit){
-            if(my_cache[set_indx].my_set[i].tag == tag){
+            if(my_cache[set_indx].my_set[i].tag == tag){ //if hit do that stuff
                 hits++;
-                my_cache[set_indx].my_set[i].lru = 1;
-                return 0; //or return hits?
+                //counter++;
+                my_cache[set_indx].my_set[i].lru = counter; //or counter 
+                counter++;
+                //return 0; //or return hits?
+                return;
             }
-            
-            my_cache[set_indx].my_set[i].lru++; //i think need to incr so no prob with other
-            if(my_cache[set_indx].my_set[i].lru >= my_cache[set_indx].my_set[bl_evict].lru){
+            //counter++;
+            //my_cache[set_indx].my_set[i].lru = counter; //i think need to incr so no prob with other
+            if(my_cache[set_indx].my_set[i].lru >= my_cache[set_indx].my_set[bl_evict].lru){ //not hit look for lru to evict
                 bl_evict = i;
             }
+            //else if(!my_cache[set_indx].my_set[i].valid_bit && !my_cache[set_indx].my_set[i].lru){
+            //    bl_empty = i;
+            //}
+       // }
+        else if (bl_empty == -1){
+           bl_empty = i;
         }
-        else{
-            bl_empty = i;
         }
     }
-    miss++;
+    //miss++;
    // for(int j = 0; j < associativity; j++){
     //    if(my_cache[set_indx].my_set[j].lru ){ //if was most rtesently used evict it 
 
@@ -191,21 +204,25 @@ int interp_address(char add){ //m,aybe i should break this up
 
     if(bl_empty != -1){
        
-       
+        miss++;
+        //counter++;
         my_cache[set_indx].my_set[bl_empty].tag = tag;
         my_cache[set_indx].my_set[bl_empty].valid_bit = 1; //one to avoid error message
-        my_cache[set_indx].my_set[bl_empty].lru = 1;
-        
-        return 1; 
+        my_cache[set_indx].my_set[bl_empty].lru = counter;
+        counter++;
+        return;
+        //return 1; 
     }
+    
     else{
-
+        miss++;
+        
         my_cache[set_indx].my_set[bl_evict].tag = tag;
-        my_cache[set_indx].my_set[bl_evict].lru = 1;
-
+        my_cache[set_indx].my_set[bl_evict].lru = counter;
+        counter++;
         evictions++;
-
-        return 2; //bc miss and eviction
+        return;
+        //return 2; //bc miss and eviction
     }
 
 
