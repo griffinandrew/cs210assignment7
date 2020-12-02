@@ -85,6 +85,21 @@ void create_cache(int set_bits, int assoc, int offset_bits){
 //going to need to dealloc this stuff
 
 
+/*
+void dealloc_cache() {
+    int i; //, j;
+    sets = (1 << set_bit);
+    for (i =0; i < sets; i++){
+        //for( j=0; j < ass; j++){
+            free((void *)my_cache[i]); //.my_set[j]);
+       // }
+        //free(my_cache[i])
+    }
+    free(my_cache);
+   // free(my_set);
+}
+
+*/
 
 void read_trace_file(char *trace) //this will need to be called after t in switch statement
 {
@@ -113,19 +128,19 @@ void read_trace_file(char *trace) //this will need to be called after t in switc
         switch(operation)
         {
             case 'L':
-                printf("%c %llu,%d\n", operation, address, size);
+                //printf("%c %llu,%d\n", operation, address, size);
                 load(address);
-                
+                printf("%c %llu,%d\n", operation, address, size);
                 break;
             case 'M':
-                printf("%c %llu,%d\n", operation, address, size);
+               // printf("%c %llu,%d\n", operation, address, size);
                 modify(address);
-                //printf("%c %llu,%d\n", operation, address, size);
+                printf("%c %llu,%d\n", operation, address, size);
                 break;
             case 'S':
-                printf("%c %llu,%d\n", operation, address, size);
+                //printf("%c %llu,%d\n", operation, address, size);
                 store(address);
-               // printf("%c %llu,%d\n", operation, address, size);
+                printf("%c %llu,%d\n", operation, address, size);
                 break;
             default:
                 break;
@@ -166,9 +181,9 @@ void interp_address(unsigned long long int address){ //maybe i should break this
     //int address = atoi(addy);
 
     tag = address >> (off_bits + set_bit);
-
+    printf("tag: %d      ", tag);
     unsigned int set_indx = (address >> off_bits) & ((1 << set_bit) -1);
-
+    printf("indx: %u      ", set_indx);
     //should i set my_set index to set index?
 
 //need to consider empty block case and how to best use lru
@@ -181,41 +196,28 @@ void interp_address(unsigned long long int address){ //maybe i should break this
         if (my_cache[set_indx].my_set[i].valid_bit == 1){
             if(my_cache[set_indx].my_set[i].tag == tag){ //if hit do that stuff
                 hits++;
-                printf("hit\n");
+                printf("hit ");
                 //counter++;
                 my_cache[set_indx].my_set[i].lru = counter++; //or counter 
                 //counter++;
                 //return 0; //or return hits?
                 return;
             }
-            //counter++;
-            //my_cache[set_indx].my_set[i].lru = counter; //i think need to incr so no prob with other
-       /*     if(my_cache[set_indx].my_set[bl_evict].lru <= my_cache[set_indx].my_set[i].lru ){ //not hit look for lru to evict //lowest is lru, store corridantes set index and i to be recalled for easy access
-                bl_evict = i; ///fix eviction, then modify 
-            }
-            //else if(!my_cache[set_indx].my_set[i].valid_bit && !my_cache[set_indx].my_set[i].lru){
-            //    bl_empty = i;
-            //}
-       // }
-        }
-        else if (bl_empty == -1){
-           bl_empty = i;
-        }
-        */
         }
     }
     miss++;
-    printf("miss\n");
+    printf("miss ");
     int lru_to_evict = INT_MAX; //just so it saves it for first case
-    for(j = 0; j < ass; j++){
-        if(my_cache[set_indx].my_set[j].lru  < lru_to_evict){
+    for(j = 0; j < ass; j++){ //bc ass is 1?
+        if(my_cache[set_indx].my_set[j].lru  <= lru_to_evict){
             bl_evict = j;
-            lru_to_evict = my_cache[set_indx].my_set[j].lru;
+            printf("blk: %d one to evict     ", bl_evict);
+            lru_to_evict = my_cache[set_indx].my_set[j].lru; //im setting t
         }
     }
     if(my_cache[set_indx].my_set[bl_evict].valid_bit == 1){
         evictions++;
-        printf("eviction\n");
+        printf("eviction ");
     }
     my_cache[set_indx].my_set[bl_evict].tag = tag;
     my_cache[set_indx].my_set[bl_evict].lru = counter++;
