@@ -15,7 +15,7 @@ int bytes;
 
 int hits = 0;
 int miss = 0;
-int evictions =0;
+int evictions = 0;
 
 
 int counter = 0; //update lru with value of counter 
@@ -47,10 +47,10 @@ int off_bits;
 
 
 
-void interp_address(unsigned long long address);
-void load(unsigned long long address);
-void modify(unsigned long long address);
-void store(unsigned long long address);
+void interp_address(unsigned long long int address);
+void load(unsigned long long int address);
+void modify(unsigned long long int address);
+void store(unsigned long long int address);
 
 //blocks here is essetianlly a cache line
 
@@ -101,7 +101,7 @@ void read_trace_file(char *trace) //this will need to be called after t in switc
     }
 
 
-    unsigned long long address; //WAIT SHOULD BE ADDRESS[]?    //wait address should be unsigned long long 
+    unsigned long long int address; //WAIT SHOULD BE ADDRESS[]?    //wait address should be unsigned long long 
     char operation;
     int size;
 
@@ -113,14 +113,19 @@ void read_trace_file(char *trace) //this will need to be called after t in switc
         switch(operation)
         {
             case 'L':
+                printf("%c %llu,%d\n", operation, address, size);
                 load(address);
+                
                 break;
             case 'M':
+                printf("%c %llu,%d\n", operation, address, size);
                 modify(address);
-                //hits++;
+                //printf("%c %llu,%d\n", operation, address, size);
                 break;
             case 'S':
+                printf("%c %llu,%d\n", operation, address, size);
                 store(address);
+               // printf("%c %llu,%d\n", operation, address, size);
                 break;
             default:
                 break;
@@ -130,7 +135,7 @@ void read_trace_file(char *trace) //this will need to be called after t in switc
     fclose(trace_p);
 }
 
-void load(unsigned long long address)
+void load(unsigned long long int address)
 {
     
     interp_address(address);
@@ -138,7 +143,7 @@ void load(unsigned long long address)
 }
 
 
-void store(unsigned long long address)
+void store(unsigned long long int address)
 {
 
     interp_address(address);
@@ -146,15 +151,16 @@ void store(unsigned long long address)
 }
 
 
-void modify(unsigned long long address)
+void modify(unsigned long long int address)
 {
     
     interp_address(address);
+    interp_address(address);
 
 }
 
 
-void interp_address(unsigned long long address){ //m,aybe i should break this up
+void interp_address(unsigned long long int address){ //maybe i should break this up
     int tag;
     //char *addy = &add; //need to solve this 
     //int address = atoi(addy);
@@ -166,7 +172,7 @@ void interp_address(unsigned long long address){ //m,aybe i should break this up
     //should i set my_set index to set index?
 
 //need to consider empty block case and how to best use lru
-    int bl_empty = -1;
+    //int bl_empty = -1;
     int bl_evict = 0;
     int i, j;
 
@@ -175,8 +181,9 @@ void interp_address(unsigned long long address){ //m,aybe i should break this up
         if (my_cache[set_indx].my_set[i].valid_bit == 1){
             if(my_cache[set_indx].my_set[i].tag == tag){ //if hit do that stuff
                 hits++;
-                counter++;
-                my_cache[set_indx].my_set[i].lru = counter; //or counter 
+                printf("hit\n");
+                //counter++;
+                my_cache[set_indx].my_set[i].lru = counter++; //or counter 
                 //counter++;
                 //return 0; //or return hits?
                 return;
@@ -198,15 +205,23 @@ void interp_address(unsigned long long address){ //m,aybe i should break this up
         }
     }
     miss++;
-    lru_to_evict = INT_MAX; //just so it saves it for first case
+    printf("miss\n");
+    int lru_to_evict = INT_MAX; //just so it saves it for first case
     for(j = 0; j < ass; j++){
         if(my_cache[set_indx].my_set[j].lru  < lru_to_evict){
             bl_evict = j;
             lru_to_evict = my_cache[set_indx].my_set[j].lru;
         }
     }
-
-
+    if(my_cache[set_indx].my_set[bl_evict].valid_bit == 1){
+        evictions++;
+        printf("eviction\n");
+    }
+    my_cache[set_indx].my_set[bl_evict].tag = tag;
+    my_cache[set_indx].my_set[bl_evict].lru = counter++;
+    my_cache[set_indx].my_set[bl_evict].valid_bit = 1;
+    
+}
 
 
     //miss++;
@@ -216,7 +231,7 @@ void interp_address(unsigned long long address){ //m,aybe i should break this up
 
      //   }
     //}
-
+/*
     if(bl_empty > -1){ 
        
         miss++;
@@ -242,6 +257,7 @@ void interp_address(unsigned long long address){ //m,aybe i should break this up
 
 }
 
+*/
 
 
 
