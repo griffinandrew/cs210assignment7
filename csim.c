@@ -176,14 +176,15 @@ void modify(unsigned long long int address)
 
 
 void interp_address(unsigned long long int address){ //maybe i should break this up
-    int tag;
+   // printf("address: %llu      ", address);
+    unsigned long long int tag;
     //char *addy = &add; //need to solve this 
     //int address = atoi(addy);
 
     tag = address >> (off_bits + set_bit);
-    printf("tag: %d      ", tag);
-    unsigned int set_indx = (address >> off_bits) & ((1 << set_bit) -1);
-    printf("indx: %u      ", set_indx);
+    printf("tag: %llu      ", tag);
+    unsigned long long int set_indx = (address >> off_bits) & ((1 << set_bit) -1);
+    printf("indx: %llu      ", set_indx);
     //should i set my_set index to set index?
 
 //need to consider empty block case and how to best use lru
@@ -192,11 +193,11 @@ void interp_address(unsigned long long int address){ //maybe i should break this
     int i, j;
 
 //this needs to be slightly diff for modify
-    for(i =0; i < ass; i++){ //sets or assoc
-        if (my_cache[set_indx].my_set[i].valid_bit == 1){
+    for(i = 0; i < ass; ++i){ //sets or assoc
+        if (my_cache[set_indx].my_set[i].valid_bit){
             if(my_cache[set_indx].my_set[i].tag == tag){ //if hit do that stuff
                 hits++;
-                printf("hit ");
+                printf("hit    ");
                 //counter++;
                 my_cache[set_indx].my_set[i].lru = counter++; //or counter 
                 //counter++;
@@ -206,18 +207,18 @@ void interp_address(unsigned long long int address){ //maybe i should break this
         }
     }
     miss++;
-    printf("miss ");
+    printf("miss    ");
     int lru_to_evict = INT_MAX; //just so it saves it for first case
-    for(j = 0; j < ass; j++){ //bc ass is 1?
-        if(my_cache[set_indx].my_set[j].lru  <= lru_to_evict){
+    for(j = 0; j < ass; ++j){ //bc ass is 1?
+        if(my_cache[set_indx].my_set[j].lru  < lru_to_evict){
             bl_evict = j;
             printf("blk: %d one to evict     ", bl_evict);
             lru_to_evict = my_cache[set_indx].my_set[j].lru; //im setting t
         }
     }
-    if(my_cache[set_indx].my_set[bl_evict].valid_bit == 1){
+    if(my_cache[set_indx].my_set[bl_evict].valid_bit){ //having == 1 causing error
         evictions++;
-        printf("eviction ");
+        printf("eviction    ");
     }
     my_cache[set_indx].my_set[bl_evict].tag = tag;
     my_cache[set_indx].my_set[bl_evict].lru = counter++;
