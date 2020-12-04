@@ -8,6 +8,7 @@
 #include <stdint.h>
 #include <limits.h>
 #include <unistd.h>
+#include <time.h>
 
 int sets; //number of sets
 int assoc; //allocation
@@ -27,7 +28,8 @@ int counter = 0; //update lru with value of counter
 typedef struct Block{ //block = line
     unsigned long long tag;
     int valid_bit;
-    int lru; //time stamp //lru will be 1 for most recent used?
+    //int lru; //time stamp //lru will be 1 for most recent used?
+    time_t time;
 } block;
 
 typedef struct Set{ //pointe to line 
@@ -81,7 +83,8 @@ void create_cache(int set_bits, int assoc, int offset_bits){
         {
             my_cache[i].my_set[j].tag = 0;
             my_cache[i].my_set[j].valid_bit = 0;
-            my_cache[i].my_set[j].lru = 0;
+            //my_cache[i].my_set[j].lru = 0;
+            my_cache[i].my_set[j].time = clock();
         }
     }
 }
@@ -185,13 +188,7 @@ void interp_address(unsigned long long int address){ //maybe i should break this
     unsigned long long int set_indx = (address >> off_bits) & ((1 << set_bit) -1);
     printf("indx: %llu      ", set_indx);
 
-    //unsigned int bl_evict = 0;
-    int i,j; //, j;
-   // int empty =0;
-   // int empty_location =0;;
-   // int in_cache =0;
-   // int lru_to_evict = 0; 
- //   int evict_location =0;
+    int i,j; 
     int bl_evict = 0;
 
 
@@ -202,18 +199,16 @@ void interp_address(unsigned long long int address){ //maybe i should break this
 
    for(i = 0; i < ass; i++){ //sets or assoc  //accidentally getting extra hit
     printf("valid bit %d  ", my_cache[set_indx].my_set[i].valid_bit);
-        if (my_cache[set_indx].my_set[i].valid_bit ){
+        if (my_cache[set_indx].my_set[i].valid_bit ==1 ){
             
             if(my_cache[set_indx].my_set[i].tag == tag){ //if hit do that stuff
                 printf("tag %llu  ", my_cache[set_indx].my_set[i].tag);
-                printf("lru %d  ", my_cache[set_indx].my_set[i].lru);
+              //  printf("lru %d  ", my_cache[set_indx].my_set[i].lru);
                 printf("valid bit  %d  ", my_cache[set_indx].my_set[i].valid_bit);
                 hits++;
                 printf("HIT    ");
-                //counter++;
-                my_cache[set_indx].my_set[i].lru = counter++; //or counter 
-                //counter++;
-                //return 0; //or return hits?
+                //my_cache[set_indx].my_set[i].lru = counter++; //or counter 
+                my_cache[set_indx].my_set[i].time = clock();
                 return;
             }
         }
@@ -221,27 +216,42 @@ void interp_address(unsigned long long int address){ //maybe i should break this
 
     miss++;
     printf("MISS    ");
-    int lru_to_evict = INT_MAX;//my_cache[set_indx].my_set[0].lru;       //INT_MAX; //INT_MAX; //just so it saves it for first case
-
+    //int lru_to_evict = INT_MAX;//my_cache[set_indx].my_set[0].lru;       //INT_MAX; //INT_MAX; //just so it saves it for first case
+   /* time_t lru_to_evict = my_cache[set_indx].my_set[0].time;
     for(j = 0; j < ass; j++){ //bc ass is 1?
-        if(my_cache[set_indx].my_set[j].lru  < lru_to_evict){   //its because if less than 1 it can only be zero 
+        if(my_cache[set_indx].my_set[j].time  < lru_to_evict){   //its because if less than 1 it can only be zero 
             bl_evict = j;
             printf("blk: %d one to evict     ", bl_evict);
             printf("evict tag %llu     ", my_cache[set_indx].my_set[j].tag);
-            printf("evict lru %d  ", my_cache[set_indx].my_set[j].lru);
+         //   printf("evict lru %d  ", my_cache[set_indx].my_set[j].lru);
             printf("evict valid bit  %d  ", my_cache[set_indx].my_set[j].valid_bit);
-            lru_to_evict = my_cache[set_indx].my_set[j].lru; //im setting t
+            lru_to_evict = my_cache[set_indx].my_set[j].time; //im setting t
         }
     }
-    if(my_cache[set_indx].my_set[bl_evict].valid_bit){ //having == 1 causing error
+
+
+*/
+    find_block_to_evict(addr)
+    printf("blk: %d one to evict     ", bl_evict);
+    printf("evict tag %llu     ", my_cache[set_indx].my_set[bl_evict].tag);
+  //  printf("evict lru %d  ", my_cache[set_indx].my_set[bl_evict].lru);
+    printf("evict valid bit  %d  ", my_cache[set_indx].my_set[bl_evict].valid_bit);
+
+    if(my_cache[set_indx].my_set[bl_evict].valid_bit == 1 ){ //having == 1 causing error
         evictions++;
-        printf("evicting occuring lru %d  ", my_cache[set_indx].my_set[bl_evict].lru);
+     //   printf("evicting occuring lru %d  ", my_cache[set_indx].my_set[bl_evict].lru);
         printf(" evicting occuring valid bit  %d  ", my_cache[set_indx].my_set[bl_evict].valid_bit);
         printf("tag of one to evict %llu     ", my_cache[set_indx].my_set[bl_evict].tag);
         printf("EVICT    ");
     }
+    
+
+
+
+
     my_cache[set_indx].my_set[bl_evict].tag = tag;
-    my_cache[set_indx].my_set[bl_evict].lru = counter++;
+    //my_cache[set_indx].my_set[bl_evict].lru = counter++;
+    my_cache[set_indx].my_set[bl_evict].time = clock();
     my_cache[set_indx].my_set[bl_evict].valid_bit = 1;
     
 }
@@ -284,6 +294,21 @@ void interp_address(unsigned long long int address){ //maybe i should break this
 
 */
 
+
+
+
+int find_block_to_evict(unsigned long long address, unsigned long long set_index)
+time_t lru_to_evict = my_cache[set_indx].my_set[0].time;
+    for(j = 0; j < ass; j++){ //bc ass is 1?
+        if(my_cache[set_indx].my_set[j].time  < lru_to_evict){   //its because if less than 1 it can only be zero 
+            bl_evict = j;
+            printf("blk: %d one to evict     ", bl_evict);
+            printf("evict tag %llu     ", my_cache[set_indx].my_set[j].tag);
+         //   printf("evict lru %d  ", my_cache[set_indx].my_set[j].lru);
+            printf("evict valid bit  %d  ", my_cache[set_indx].my_set[j].valid_bit);
+            lru_to_evict = my_cache[set_indx].my_set[j].time; //im setting t
+        }
+    }
 
 //this is the main control center of the program, intially the getopt function is used to determine and set the relevant information for the file that will be read in 
 //after that the values read in are sent to create cache to form a cache specific to these requirements, after that the tracefile is sent to 
