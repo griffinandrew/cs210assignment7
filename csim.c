@@ -18,14 +18,14 @@ int miss = 0;
 int evictions = 0;
 
 
-int counter = 1; //update lru with value of counter 
+int counter = 0; //update lru with value of counter 
 //to evict go throiugh step block aby blovk and evict smallest one 
 
 //2d array of structs 
 //dont need to stroe data bc it is simulator 
 
 typedef struct Block{ //block = line
-    int tag;
+    unsigned long long tag;
     int valid_bit;
     int lru; //time stamp //lru will be 1 for most recent used?
 } block;
@@ -179,32 +179,33 @@ void modify(unsigned long long int address)
 
 void interp_address(unsigned long long int address){ //maybe i should break this up
    // printf("address: %llu      ", address);
-    int tag;
+    unsigned long long tag;
     tag = address >> (off_bits + set_bit);
-    printf("tag: %d      ", tag);
-     int set_indx = (address >> off_bits) & ((1 << set_bit) -1);
-    printf("indx: %d      ", set_indx);
+    printf("tag: %llu      ", tag);
+    unsigned long long int set_indx = (address >> off_bits) & ((1 << set_bit) -1);
+    printf("indx: %llu      ", set_indx);
 
-    unsigned int bl_evict = 0;
-    int i, j;
+    //unsigned int bl_evict = 0;
+    int i,j; //, j;
+   // int empty =0;
+   // int empty_location =0;;
+   // int in_cache =0;
+   // int lru_to_evict = 0; 
+ //   int evict_location =0;
+    int bl_evict = 0;
+
 
 //this needs to be slightly diff for modify
     printf("ass %d    ", ass);
 
 
 
-
-
-
-
-
-    
- /*   for(i = 0; i < ass; i++){ //sets or assoc  //accidentally getting extra hit
+   for(i = 0; i < ass; i++){ //sets or assoc  //accidentally getting extra hit
     printf("valid bit %d  ", my_cache[set_indx].my_set[i].valid_bit);
-        if (my_cache[set_indx].my_set[i].valid_bit == 1 ){
+        if (my_cache[set_indx].my_set[i].valid_bit ){
             
             if(my_cache[set_indx].my_set[i].tag == tag){ //if hit do that stuff
-                printf("tag %d  ", my_cache[set_indx].my_set[i].tag);
+                printf("tag %llu  ", my_cache[set_indx].my_set[i].tag);
                 printf("lru %d  ", my_cache[set_indx].my_set[i].lru);
                 printf("valid bit  %d  ", my_cache[set_indx].my_set[i].valid_bit);
                 hits++;
@@ -218,41 +219,31 @@ void interp_address(unsigned long long int address){ //maybe i should break this
         }
     }
 
-
-
-
-
-
-
-
-
-
-
-
     miss++;
     printf("MISS    ");
-    int lru_to_evict = 0; //INT_MAX; //just so it saves it for first case
+    int lru_to_evict = INT_MAX;//my_cache[set_indx].my_set[0].lru;       //INT_MAX; //INT_MAX; //just so it saves it for first case
+
     for(j = 0; j < ass; j++){ //bc ass is 1?
-        if(my_cache[set_indx].my_set[j].lru  >= lru_to_evict){   //its because if less than 1 it can only be zero 
+        if(my_cache[set_indx].my_set[j].lru  < lru_to_evict){   //its because if less than 1 it can only be zero 
             bl_evict = j;
             printf("blk: %d one to evict     ", bl_evict);
-            printf("evict tag %d     ", my_cache[set_indx].my_set[bl_evict].tag);
-            printf("evict lru %d  ", my_cache[set_indx].my_set[i].lru);
-            printf("evict valid bit  %d  ", my_cache[set_indx].my_set[i].valid_bit);
+            printf("evict tag %llu     ", my_cache[set_indx].my_set[j].tag);
+            printf("evict lru %d  ", my_cache[set_indx].my_set[j].lru);
+            printf("evict valid bit  %d  ", my_cache[set_indx].my_set[j].valid_bit);
             lru_to_evict = my_cache[set_indx].my_set[j].lru; //im setting t
         }
     }
-    if(my_cache[set_indx].my_set[bl_evict].valid_bit ==1 ){ //having == 1 causing error
+    if(my_cache[set_indx].my_set[bl_evict].valid_bit){ //having == 1 causing error
         evictions++;
         printf("evicting occuring lru %d  ", my_cache[set_indx].my_set[bl_evict].lru);
         printf(" evicting occuring valid bit  %d  ", my_cache[set_indx].my_set[bl_evict].valid_bit);
-        printf("tag of one to evict %d     ", my_cache[set_indx].my_set[bl_evict].tag);
+        printf("tag of one to evict %llu     ", my_cache[set_indx].my_set[bl_evict].tag);
         printf("EVICT    ");
     }
     my_cache[set_indx].my_set[bl_evict].tag = tag;
     my_cache[set_indx].my_set[bl_evict].lru = counter++;
     my_cache[set_indx].my_set[bl_evict].valid_bit = 1;
-    */
+    
 }
 
  //valid bit always true 
