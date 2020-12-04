@@ -46,7 +46,7 @@ int off_bits;
 //char *tr_file;
 
 
-
+ 
 void interp_address(unsigned long long int address);
 void load(unsigned long long int address);
 void modify(unsigned long long int address);
@@ -54,6 +54,9 @@ void store(unsigned long long int address);
 
 //blocks here is essetianlly a cache line
 
+
+//this functiuon is used to create the cahce for simulation it uses the given information from main to determine the number of sets, associativty and offset in bytes 
+//from these features i allocate the relevant size and initialize all set attributes to -1
 void create_cache(int set_bits, int assoc, int offset_bits){
     sets = 1 << set_bits; //left shift same as mult by 2
     assoc = assoc;
@@ -101,6 +104,8 @@ void dealloc_cache() {
 
 */
 
+//this function takes in the trace file, opens it for reading, and then loops through while scanning in the revelant information from the file 
+//it uses a switch statement from the operation to send control to the functions of that relevant operation then closes the file after reading
 void read_trace_file(char *trace) //this will need to be called after t in switch statement
 {
 //char* trace_func = trace_file;
@@ -165,7 +170,7 @@ void store(unsigned long long int address)
 
 }
 
-
+//this function is meant to take in the given address and simulate the modify operation by calling twice 
 void modify(unsigned long long int address)
 {
     
@@ -193,7 +198,7 @@ void interp_address(unsigned long long int address){ //maybe i should break this
     int i, j;
 
 //this needs to be slightly diff for modify
-    for(i = 0; i < ass; ++i){ //sets or assoc
+    for(i = 0; i < ass; i++){ //sets or assoc
         if (my_cache[set_indx].my_set[i].valid_bit){
             if(my_cache[set_indx].my_set[i].tag == tag){ //if hit do that stuff
                 hits++;
@@ -209,7 +214,7 @@ void interp_address(unsigned long long int address){ //maybe i should break this
     miss++;
     printf("miss    ");
     int lru_to_evict = INT_MAX; //just so it saves it for first case
-    for(j = 0; j < ass; ++j){ //bc ass is 1?
+    for(j = 0; j < ass; j++){ //bc ass is 1?
         if(my_cache[set_indx].my_set[j].lru  < lru_to_evict){
             bl_evict = j;
             printf("blk: %d one to evict     ", bl_evict);
@@ -263,7 +268,8 @@ void interp_address(unsigned long long int address){ //maybe i should break this
 */
 
 
-
+//this is the main control center of the program, intially the getopt function is used to determine and set the relevant information for the file that will be read in 
+//after that the values read in are sent to create cache to form a cache specific to these requirements, after that the tracefile is sent to 
 int main(int argc, char **argv)  //int is number of args char is strings part of that arg list (list of strings bascvially) 
 {
     int set_bits = 0;
