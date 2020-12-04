@@ -4,10 +4,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <getopt.h>
-#include <time.h>
+#include <string.h>
 #include <stdint.h>
 #include <limits.h>
-
+#include <unistd.h>
 
 int sets; //number of sets
 int assoc; //allocation
@@ -18,7 +18,7 @@ int miss = 0;
 int evictions = 0;
 
 
-int counter = 0; //update lru with value of counter 
+int counter = 1; //update lru with value of counter 
 //to evict go throiugh step block aby blovk and evict smallest one 
 
 //2d array of structs 
@@ -79,9 +79,9 @@ void create_cache(int set_bits, int assoc, int offset_bits){
 
         for (j = 0; j < assoc; j ++) //each block within set intialize there starting information
         {
-            my_cache[i].my_set[j].tag = -1;
-            my_cache[i].my_set[j].valid_bit = -1;
-            my_cache[i].my_set[j].lru = -1;
+            my_cache[i].my_set[j].tag = 0;
+            my_cache[i].my_set[j].valid_bit = 0;
+            my_cache[i].my_set[j].lru = 0;
         }
     }
 }
@@ -90,19 +90,16 @@ void create_cache(int set_bits, int assoc, int offset_bits){
 
 /*
 void dealloc_cache() {
-    int i; //, j;
+    int i;
     sets = (1 << set_bit);
     for (i =0; i < sets; i++){
-        //for( j=0; j < ass; j++){
-            free((void *)my_cache[i]); //.my_set[j]);
-       // }
-        //free(my_cache[i])
+        free(my_cache[i].my_set[i]); 
     }
     free(my_cache);
-   // free(my_set);
 }
 
 */
+
 
 //this function takes in the trace file, opens it for reading, and then loops through while scanning in the revelant information from the file 
 //it uses a switch statement from the operation to send control to the functions of that relevant operation then closes the file after reading
@@ -182,27 +179,36 @@ void modify(unsigned long long int address)
 
 void interp_address(unsigned long long int address){ //maybe i should break this up
    // printf("address: %llu      ", address);
-    unsigned long long int tag;
-    //char *addy = &add; //need to solve this 
-    //int address = atoi(addy);
-
+    int tag;
     tag = address >> (off_bits + set_bit);
-    printf("tag: %llu      ", tag);
-    unsigned long long int set_indx = (address >> off_bits) & ((1 << set_bit) -1);
-    printf("indx: %llu      ", set_indx);
-    //should i set my_set index to set index?
+    printf("tag: %d      ", tag);
+     int set_indx = (address >> off_bits) & ((1 << set_bit) -1);
+    printf("indx: %d      ", set_indx);
 
-//need to consider empty block case and how to best use lru
-    //int bl_empty = -1;
-    int bl_evict = 0;
+    unsigned int bl_evict = 0;
     int i, j;
 
 //this needs to be slightly diff for modify
-    for(i = 0; i < ass; i++){ //sets or assoc
-        if (my_cache[set_indx].my_set[i].valid_bit){
+    printf("ass %d    ", ass);
+
+
+
+
+
+
+
+
+    
+ /*   for(i = 0; i < ass; i++){ //sets or assoc  //accidentally getting extra hit
+    printf("valid bit %d  ", my_cache[set_indx].my_set[i].valid_bit);
+        if (my_cache[set_indx].my_set[i].valid_bit == 1 ){
+            
             if(my_cache[set_indx].my_set[i].tag == tag){ //if hit do that stuff
+                printf("tag %d  ", my_cache[set_indx].my_set[i].tag);
+                printf("lru %d  ", my_cache[set_indx].my_set[i].lru);
+                printf("valid bit  %d  ", my_cache[set_indx].my_set[i].valid_bit);
                 hits++;
-                printf("hit    ");
+                printf("HIT    ");
                 //counter++;
                 my_cache[set_indx].my_set[i].lru = counter++; //or counter 
                 //counter++;
@@ -211,25 +217,45 @@ void interp_address(unsigned long long int address){ //maybe i should break this
             }
         }
     }
+
+
+
+
+
+
+
+
+
+
+
+
     miss++;
-    printf("miss    ");
-    int lru_to_evict = INT_MAX; //just so it saves it for first case
+    printf("MISS    ");
+    int lru_to_evict = 0; //INT_MAX; //just so it saves it for first case
     for(j = 0; j < ass; j++){ //bc ass is 1?
-        if(my_cache[set_indx].my_set[j].lru  < lru_to_evict){
+        if(my_cache[set_indx].my_set[j].lru  >= lru_to_evict){   //its because if less than 1 it can only be zero 
             bl_evict = j;
             printf("blk: %d one to evict     ", bl_evict);
+            printf("evict tag %d     ", my_cache[set_indx].my_set[bl_evict].tag);
+            printf("evict lru %d  ", my_cache[set_indx].my_set[i].lru);
+            printf("evict valid bit  %d  ", my_cache[set_indx].my_set[i].valid_bit);
             lru_to_evict = my_cache[set_indx].my_set[j].lru; //im setting t
         }
     }
-    if(my_cache[set_indx].my_set[bl_evict].valid_bit){ //having == 1 causing error
+    if(my_cache[set_indx].my_set[bl_evict].valid_bit ==1 ){ //having == 1 causing error
         evictions++;
-        printf("eviction    ");
+        printf("evicting occuring lru %d  ", my_cache[set_indx].my_set[bl_evict].lru);
+        printf(" evicting occuring valid bit  %d  ", my_cache[set_indx].my_set[bl_evict].valid_bit);
+        printf("tag of one to evict %d     ", my_cache[set_indx].my_set[bl_evict].tag);
+        printf("EVICT    ");
     }
     my_cache[set_indx].my_set[bl_evict].tag = tag;
     my_cache[set_indx].my_set[bl_evict].lru = counter++;
     my_cache[set_indx].my_set[bl_evict].valid_bit = 1;
-    
+    */
 }
+
+ //valid bit always true 
 
 
     //miss++;
@@ -276,8 +302,6 @@ int main(int argc, char **argv)  //int is number of args char is strings part of
     int associativity = 0;
     int offset_bits = 0;
     char *trace_file = NULL;
-
-
     char opt;
 
     while(1)
@@ -285,7 +309,6 @@ int main(int argc, char **argv)  //int is number of args char is strings part of
 
         opt = getopt(argc, argv, "vhs:E:b:t:"); //looks at argv and tries to match it with one of those things if found opt gives letter that first found
         
-
         if (opt == -1)
         {
             break;
@@ -315,13 +338,11 @@ int main(int argc, char **argv)  //int is number of args char is strings part of
 
     }
 
-
-
-    printf("%d, %d, %d, %s\n", set_bits, associativity, offset_bits, trace_file);
+   //printf("%d, %d, %d, %s\n", set_bits, associativity, offset_bits, trace_file);
 
     create_cache(set_bits, associativity, offset_bits);
 
-    printf("%d, %d, %d, %s\n", set_bits, associativity, offset_bits, trace_file);
+   // printf("%d, %d, %d, %s\n", set_bits, associativity, offset_bits, trace_file);
     read_trace_file(trace_file);
 
     printSummary(hits, miss, evictions);
