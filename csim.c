@@ -26,10 +26,10 @@ int counter = 0; //update lru with value of counter
 //dont need to stroe data bc it is simulator 
 
 typedef struct Block{ //block = line
-    unsigned long long tag;
+    unsigned long long int tag;
     int valid_bit;
-    //int lru; //time stamp //lru will be 1 for most recent used?
-    time_t time;
+    int lru; //time stamp //lru will be 1 for most recent used?
+    //clock_t time;
 } block;
 
 typedef struct Set{ //pointe to line 
@@ -84,8 +84,8 @@ void create_cache(int set_bits, int assoc, int offset_bits){
         {
             my_cache[i].my_set[j].tag = 0;
             my_cache[i].my_set[j].valid_bit = 0;
-            //my_cache[i].my_set[j].lru = 0;
-            my_cache[i].my_set[j].time = clock();
+            my_cache[i].my_set[j].lru = 0;
+            //my_cache[i].my_set[j].time = clock();
         }
     }
 }
@@ -126,27 +126,27 @@ void read_trace_file(char *trace) //this will need to be called after t in switc
     char operation;
     int size;
 
-    while(fscanf(trace_p, " %c %llu,%d\n", &operation, &address, &size) > 0){ //space is included in front bc I should be ignored 
+    while(fscanf(trace_p, " %c %llx,%d\n", &operation, &address, &size) > 0){ //space is included in front bc I should be ignored 
 //use fscan or gets or getline 
 //need to tell it to read until EOF or EOL
    // address = (uint64_t) address;
 
-        switch(operation)
+        switch(operation)   //i think reading in the address is how problems are arising
         {
             case 'L':
                 //printf("%c %llu,%d\n", operation, address, size);
                 load(address);
-                printf("%c %llu,%d\n", operation, address, size);
+                printf("%c %llx,%d\n", operation, address, size);
                 break;
             case 'M':
                // printf("%c %llu,%d\n", operation, address, size);
                 modify(address);
-                printf("%c %llu,%d\n", operation, address, size);
+                printf("%c %llx,%d\n", operation, address, size);
                 break;
             case 'S':
                 //printf("%c %llu,%d\n", operation, address, size);
                 store(address);
-                printf("%c %llu,%d\n", operation, address, size);
+                printf("%c %llx,%d\n", operation, address, size);
                 break;
             default:
                 break;
@@ -181,9 +181,9 @@ void modify(unsigned long long int address)
 }
 
 
-void interp_address(unsigned long long int address){ //maybe i should break this up
-   // printf("address: %llu      ", address);
-    unsigned long long tag;
+void interp_address(unsigned long long int address){ //maybe i should break this up //wait address is in hex but I am reading in int's? 
+    printf("address: %llu      ", address);
+    unsigned long long int tag;
     tag = address >> (off_bits + set_bit);
     printf("tag: %llu      ", tag);
     unsigned long long int set_indx = (address >> off_bits) & ((1 << set_bit) -1);
@@ -204,12 +204,12 @@ void interp_address(unsigned long long int address){ //maybe i should break this
             
             if(my_cache[set_indx].my_set[i].tag == tag){ //if hit do that stuff
                 printf("tag %llu  ", my_cache[set_indx].my_set[i].tag);
-              //  printf("lru %d  ", my_cache[set_indx].my_set[i].lru);
+                printf("lru %d  ", my_cache[set_indx].my_set[i].lru);
                 printf("valid bit  %d  ", my_cache[set_indx].my_set[i].valid_bit);
                 hits++;
                 printf("HIT    ");
-                //my_cache[set_indx].my_set[i].lru = counter++; //or counter 
-                my_cache[set_indx].my_set[i].time = clock();
+                my_cache[set_indx].my_set[i].lru = counter++; //or counter 
+                //my_cache[set_indx].my_set[i].time = clock();
                 return;
             }
         }
@@ -235,22 +235,22 @@ void interp_address(unsigned long long int address){ //maybe i should break this
     bl_evict = find_block_to_evict(set_indx);
     printf("blk: %d one to evict     ", bl_evict);
     printf("evict tag %llu     ", my_cache[set_indx].my_set[bl_evict].tag);
-  //  printf("evict lru %d  ", my_cache[set_indx].my_set[bl_evict].lru);
+    printf("evict lru %d  ", my_cache[set_indx].my_set[bl_evict].lru);
     printf("evict valid bit  %d  ", my_cache[set_indx].my_set[bl_evict].valid_bit);
-    printf("evict time %jd     ", my_cache[set_indx].my_set[bl_evict].time);
+   // printf("evict time %jd     ", my_cache[set_indx].my_set[bl_evict].time);
 
     if(my_cache[set_indx].my_set[bl_evict].valid_bit ==1 ){ //having == 1 causing error
         evictions++;
-     //   printf("evicting occuring lru %d  ", my_cache[set_indx].my_set[bl_evict].lru);
+        printf("evicting occuring lru %d  ", my_cache[set_indx].my_set[bl_evict].lru);
         printf("evicting occuring valid bit  %d  ", my_cache[set_indx].my_set[bl_evict].valid_bit);
         printf("evicting tag %llu     ", my_cache[set_indx].my_set[bl_evict].tag);
-        printf("evicting time %jd     ", my_cache[set_indx].my_set[bl_evict].time);
+       // printf("evicting time %jd     ", my_cache[set_indx].my_set[bl_evict].time);
         printf("EVICT    ");
     }
     
     my_cache[set_indx].my_set[bl_evict].tag = tag;
-    //my_cache[set_indx].my_set[bl_evict].lru = counter++;
-    my_cache[set_indx].my_set[bl_evict].time = clock();
+    my_cache[set_indx].my_set[bl_evict].lru = counter++;
+   // my_cache[set_indx].my_set[bl_evict].time = clock();
     my_cache[set_indx].my_set[bl_evict].valid_bit = 1;
     
 }
@@ -298,19 +298,20 @@ void interp_address(unsigned long long int address){ //maybe i should break this
 
 int find_block_to_evict(unsigned long long set_index){
 unsigned long long set_indx = set_index;
-time_t lru_to_evict = my_cache[set_indx].my_set[0].time;
+//clock_t lru_to_evict = my_cache[set_indx].my_set[0].time;
+int lru_to_evict = INT_MAX;
 int bl_evict =0;
 int j;
 
     for(j = 0; j < ass; j++){ //bc ass is 1?
-        if(lru_to_evict >= my_cache[set_indx].my_set[j].time){   //its because if less than 1 it can only be zero 
+        if(lru_to_evict > my_cache[set_indx].my_set[j].lru){   //its because if less than 1 it can only be zero 
             bl_evict = j;
-            printf("blk: %d one to evict     ", bl_evict);
-            printf("evict tag %llu     ", my_cache[set_indx].my_set[j].tag);
-            printf("evict time %jd     ", my_cache[set_indx].my_set[j].time);
+           // printf("blk: %d one to evict     ", bl_evict);
+           // printf("evict tag %llu     ", my_cache[set_indx].my_set[j].tag);
+           // printf("evict time %jd     ", my_cache[set_indx].my_set[j].time);
          //   printf("evict lru %d  ", my_cache[set_indx].my_set[j].lru);
-            printf("evict valid bit  %d  ", my_cache[set_indx].my_set[j].valid_bit);
-            lru_to_evict = my_cache[set_indx].my_set[j].time; //im setting t
+           // printf("evict valid bit  %d  ", my_cache[set_indx].my_set[j].valid_bit);
+            lru_to_evict = my_cache[set_indx].my_set[j].lru; //im setting t
         }
     }
     return bl_evict;
