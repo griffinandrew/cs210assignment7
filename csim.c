@@ -53,6 +53,7 @@ void interp_address(unsigned long long int address);
 void load(unsigned long long int address);
 void modify(unsigned long long int address);
 void store(unsigned long long int address);
+int find_block_to_evict(unsigned long long set_index);
 
 //blocks here is essetianlly a cache line
 
@@ -188,8 +189,8 @@ void interp_address(unsigned long long int address){ //maybe i should break this
     unsigned long long int set_indx = (address >> off_bits) & ((1 << set_bit) -1);
     printf("indx: %llu      ", set_indx);
 
-    int i,j; 
-    int bl_evict = 0;
+    int i;//,j; 
+    int bl_evict;
 
 
 //this needs to be slightly diff for modify
@@ -231,24 +232,22 @@ void interp_address(unsigned long long int address){ //maybe i should break this
 
 
 */
-    find_block_to_evict(addr)
+    bl_evict = find_block_to_evict(set_indx);
     printf("blk: %d one to evict     ", bl_evict);
     printf("evict tag %llu     ", my_cache[set_indx].my_set[bl_evict].tag);
   //  printf("evict lru %d  ", my_cache[set_indx].my_set[bl_evict].lru);
     printf("evict valid bit  %d  ", my_cache[set_indx].my_set[bl_evict].valid_bit);
+    printf("evict time %jd     ", my_cache[set_indx].my_set[bl_evict].time);
 
-    if(my_cache[set_indx].my_set[bl_evict].valid_bit == 1 ){ //having == 1 causing error
+    if(my_cache[set_indx].my_set[bl_evict].valid_bit ==1 ){ //having == 1 causing error
         evictions++;
      //   printf("evicting occuring lru %d  ", my_cache[set_indx].my_set[bl_evict].lru);
-        printf(" evicting occuring valid bit  %d  ", my_cache[set_indx].my_set[bl_evict].valid_bit);
-        printf("tag of one to evict %llu     ", my_cache[set_indx].my_set[bl_evict].tag);
+        printf("evicting occuring valid bit  %d  ", my_cache[set_indx].my_set[bl_evict].valid_bit);
+        printf("evicting tag %llu     ", my_cache[set_indx].my_set[bl_evict].tag);
+        printf("evicting time %jd     ", my_cache[set_indx].my_set[bl_evict].time);
         printf("EVICT    ");
     }
     
-
-
-
-
     my_cache[set_indx].my_set[bl_evict].tag = tag;
     //my_cache[set_indx].my_set[bl_evict].lru = counter++;
     my_cache[set_indx].my_set[bl_evict].time = clock();
@@ -297,18 +296,25 @@ void interp_address(unsigned long long int address){ //maybe i should break this
 
 
 
-int find_block_to_evict(unsigned long long address, unsigned long long set_index)
+int find_block_to_evict(unsigned long long set_index){
+unsigned long long set_indx = set_index;
 time_t lru_to_evict = my_cache[set_indx].my_set[0].time;
+int bl_evict =0;
+int j;
+
     for(j = 0; j < ass; j++){ //bc ass is 1?
-        if(my_cache[set_indx].my_set[j].time  < lru_to_evict){   //its because if less than 1 it can only be zero 
+        if(lru_to_evict >= my_cache[set_indx].my_set[j].time){   //its because if less than 1 it can only be zero 
             bl_evict = j;
             printf("blk: %d one to evict     ", bl_evict);
             printf("evict tag %llu     ", my_cache[set_indx].my_set[j].tag);
+            printf("evict time %jd     ", my_cache[set_indx].my_set[j].time);
          //   printf("evict lru %d  ", my_cache[set_indx].my_set[j].lru);
             printf("evict valid bit  %d  ", my_cache[set_indx].my_set[j].valid_bit);
             lru_to_evict = my_cache[set_indx].my_set[j].time; //im setting t
         }
     }
+    return bl_evict;
+}
 
 //this is the main control center of the program, intially the getopt function is used to determine and set the relevant information for the file that will be read in 
 //after that the values read in are sent to create cache to form a cache specific to these requirements, after that the tracefile is sent to 
