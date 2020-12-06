@@ -1,5 +1,8 @@
 //Griffin Heyrich gheyrich@bu.edu
 //U42992446
+//this program is designed to simulate the cache it reads in the relevant information to a trace in main, then the trace file is sent to read tracefile where the reading of each inddivdial operation is read in and sent to that operation for simualtion
+//each operation uses cache simulate op to simulate the that operation in the cache if a hit is determined the global counter is incremented and the function returns if it is a miss the set index is sent to find evict idex to determine what index 
+//needs to be evicted if the valid bit is 1 eviction is incremented, if its a miss or needs to be evicted then the attributes of the index are updated
 #include "cachelab.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -12,19 +15,17 @@
 
 int sets; //number of sets
 int assoc; //allocation
-int bytes;
+int bytes; //offset
 
+//counters for relevant outcomes
 int hits = 0;
 int miss = 0;
 int evictions = 0;
 
-
+//lru counter
 int counter = 0; //update lru with value of counter 
-//to evict go throiugh step block aby blovk and evict smallest one 
 
-//2d array of structs 
-//dont need to stroe data bc it is simulator 
-
+//struct for each block
 typedef struct Block{ //block = line
     unsigned long long int tag;
     int valid_bit;
@@ -32,45 +33,36 @@ typedef struct Block{ //block = line
     //clock_t time;
 } block;
 
-typedef struct Set{ //pointe to line 
+//struct for each set
+typedef struct Set{
     unsigned int index; 
     block *my_set; //array of sets in struct
 } set;
 
 set *my_cache;
 
-
-
-//took this out of main to use in other fucntions //could be cause of seg fault
+//globals assigned in main to be used in other function for relevant calculations
 int set_bit;
-int ass; //if you change these to be globals and then send those locals in main to be stored for ref by other programs that might be the move
+int ass; 
 int off_bits;
-//char *tr_file;
 
-
- 
-void interp_address(unsigned long long int address);
+void cache_simulate_op(unsigned long long int address);
 void load(unsigned long long int address);
 void modify(unsigned long long int address);
 void store(unsigned long long int address);
 int find_block_to_evict(unsigned long long set_index);
 
-//blocks here is essetianlly a cache line
 
 
 //this functiuon is used to create the cahce for simulation it uses the given information from main to determine the number of sets, associativty and offset in bytes 
 //from these features i allocate the relevant size and initialize all set attributes to -1
 void create_cache(int set_bits, int assoc, int offset_bits){
+    
     sets = 1 << set_bits; //left shift same as mult by 2
     assoc = assoc;
     bytes = 1 << offset_bits;
 
-    printf("%d, %d, %d\n", sets, assoc, bytes);
-    printf("my_cache: %p\n", my_cache);
-
     my_cache = (set *)malloc(sets * sizeof(set) ); //alloc space for cache
-    printf("my_cache: %p\n", my_cache);
-
 
     int i =0;
     int j =0;
@@ -79,248 +71,158 @@ void create_cache(int set_bits, int assoc, int offset_bits){
         my_cache[i].index = i;
         my_cache[i].my_set = (block *) malloc(assoc * sizeof(block)); //allocate my set within each set of size block
 
-
-        for (j = 0; j < assoc; j ++) //each block within set intialize there starting information
+        for (j = 0; j < assoc; j ++) //each block within set intialize there starting information to 0
         {
             my_cache[i].my_set[j].tag = 0;
             my_cache[i].my_set[j].valid_bit = 0;
             my_cache[i].my_set[j].lru = 0;
-            //my_cache[i].my_set[j].time = clock();
         }
     }
 }
-//going to need to dealloc this stuff
 
 
 /*
 void dealloc_cache() {
-    int i;
+    int i, j;
     sets = (1 << set_bit);
     for (i =0; i < sets; i++){
-        free(my_cache[i].my_set[i]); 
+        for(j = 0; j < ass; j++){
+            void * p = (void*)my_cache[i].my_set[j];
+            free(p); 
+        }
+        
     }
     free(my_cache);
 }
 
 */
 
-
 //this function takes in the trace file, opens it for reading, and then loops through while scanning in the revelant information from the file 
 //it uses a switch statement from the operation to send control to the functions of that relevant operation then closes the file after reading
 void read_trace_file(char *trace) //this will need to be called after t in switch statement
 {
-//char* trace_func = trace_file;
-    if(trace == NULL){
-        printf("BADDDDDDDD");
-    }
-//FILE* use fopen with r to read the data
-    FILE* trace_p = fopen(trace, "r"); //why is this failing
 
-    if (trace_p == NULL){
+    unsigned long long int address;
+    char operation;
+    int size;
+
+    if(trace == NULL){ //if the trace file is null print message and display error
+        printf("file is null\n");
+         exit(EXIT_FAILURE);
+    }
+    FILE* trace_p = fopen(trace, "r"); //read in the trace file
+
+    if (trace_p == NULL){//if the file pointer is null print message and display error
         printf("file failed to open\n");
         exit(EXIT_FAILURE);
     }
 
+    while(fscanf(trace_p, " %c %llx,%d\n", &operation, &address, &size) > 0){ //this reads in each given description of the trace and sets the variables to the scanned in values
 
-    unsigned long long int address; //WAIT SHOULD BE ADDRESS[]?    //wait address should be unsigned long long 
-    char operation;
-    int size;
-
-    while(fscanf(trace_p, " %c %llx,%d\n", &operation, &address, &size) > 0){ //space is included in front bc I should be ignored 
-//use fscan or gets or getline 
-//need to tell it to read until EOF or EOL
-   // address = (uint64_t) address;
-
-        switch(operation)   //i think reading in the address is how problems are arising
+        switch(operation)   //a switch statement is used here to pass control to each different command read in 
         {
             case 'L':
-                //printf("%c %llu,%d\n", operation, address, size);
-                load(address);
-                printf("%c %llx,%d\n", operation, address, size);
+                load(address); //if load op call load with address
                 break;
             case 'M':
-               // printf("%c %llu,%d\n", operation, address, size);
-                modify(address);
-                printf("%c %llx,%d\n", operation, address, size);
+                modify(address); //if modify op call modify with address
                 break;
             case 'S':
-                //printf("%c %llu,%d\n", operation, address, size);
-                store(address);
-                printf("%c %llx,%d\n", operation, address, size);
+                store(address); //if store op call store with address
                 break;
-            default:
+            default: //deafult just break
                 break;
         }
-
     }
-    fclose(trace_p);
+    fclose(trace_p); //close the file after all attributes have been read
 }
 
+//this fucntion isn meant to simualte the load operation it takes the address and passes it to cache simualate op to be interpreted
 void load(unsigned long long int address)
 {
     
-    interp_address(address);
+    cache_simulate_op(address);
 
 }
 
-
+//this function is meant to take in the given address and simulate the store operation it does so by calling cache simualate op to be interpret and run the op
 void store(unsigned long long int address)
 {
 
-    interp_address(address);
+    cache_simulate_op(address);
 
 }
 
-//this function is meant to take in the given address and simulate the modify operation by calling twice 
+//this function is meant to take in the given address and simulate the modify operation by calling twice to cache simulate op to simulate a load then store 
 void modify(unsigned long long int address)
 {
     
-    interp_address(address);
-    interp_address(address);
+    cache_simulate_op(address);
+    cache_simulate_op(address);
 
 }
 
-
-void interp_address(unsigned long long int address){ //maybe i should break this up //wait address is in hex but I am reading in int's? 
-    printf("address: %llu      ", address);
+//this function is meant to simulate all the relavent operations for a cache. it does so first by calculating the tag and set index from the address as well as set bits and offset bits using bit manipulation
+//it then loops through trying to that index trying to identify a valid bit and tag match if it does so a hit is recorded the lru counter incremented and the function returns
+//if a hit is not found a miss has occured, the set idx is sent to find block to evict to determine proper eviction block if that block has a valid bit an eviction takes place if not no eviction, in any case the attributes of that idx are updated
+void cache_simulate_op(unsigned long long int address){
+    
+    int i; 
+    int evict_idx;
     unsigned long long int tag;
-    tag = address >> (off_bits + set_bit);
-    printf("tag: %llu      ", tag);
-    unsigned long long int set_indx = (address >> off_bits) & ((1 << set_bit) -1);
-    printf("indx: %llu      ", set_indx);
+    unsigned long long int set_indx;
 
-    int i;//,j; 
-    int bl_evict;
+    tag = address >> (off_bits + set_bit); //calcualte the tag 
 
-
-//this needs to be slightly diff for modify
-    printf("ass %d    ", ass);
-
-
-
-   for(i = 0; i < ass; i++){ //sets or assoc  //accidentally getting extra hit
-    printf("valid bit %d  ", my_cache[set_indx].my_set[i].valid_bit);
-        if (my_cache[set_indx].my_set[i].valid_bit ==1 ){
-            
-            if(my_cache[set_indx].my_set[i].tag == tag){ //if hit do that stuff
-                printf("tag %llu  ", my_cache[set_indx].my_set[i].tag);
-                printf("lru %d  ", my_cache[set_indx].my_set[i].lru);
-                printf("valid bit  %d  ", my_cache[set_indx].my_set[i].valid_bit);
-                hits++;
-                printf("HIT    ");
-                my_cache[set_indx].my_set[i].lru = counter++; //or counter 
-                //my_cache[set_indx].my_set[i].time = clock();
+    set_indx = (address >> off_bits) & ((1 << set_bit) -1); //calcualte the set index
+    
+   for(i = 0; i < ass; i++){ 
+        if (my_cache[set_indx].my_set[i].valid_bit == 1){
+            if(my_cache[set_indx].my_set[i].tag == tag){ //if the block has a valid bit and the tags match, a hit takes place
+                hits++; //increment hits
+                my_cache[set_indx].my_set[i].lru = counter++; //increment the counter and assign it to that hits lru
                 return;
             }
         }
     }
+    miss++; //if a hit was not found increment miss 
 
-    miss++;
-    printf("MISS    ");
-    //int lru_to_evict = INT_MAX;//my_cache[set_indx].my_set[0].lru;       //INT_MAX; //INT_MAX; //just so it saves it for first case
-   /* time_t lru_to_evict = my_cache[set_indx].my_set[0].time;
-    for(j = 0; j < ass; j++){ //bc ass is 1?
-        if(my_cache[set_indx].my_set[j].time  < lru_to_evict){   //its because if less than 1 it can only be zero 
-            bl_evict = j;
-            printf("blk: %d one to evict     ", bl_evict);
-            printf("evict tag %llu     ", my_cache[set_indx].my_set[j].tag);
-         //   printf("evict lru %d  ", my_cache[set_indx].my_set[j].lru);
-            printf("evict valid bit  %d  ", my_cache[set_indx].my_set[j].valid_bit);
-            lru_to_evict = my_cache[set_indx].my_set[j].time; //im setting t
-        }
-    }
+    evict_idx = find_block_to_evict(set_indx); //send the set index to the idx to evict to determine what idx needs to be evicted using lru
 
-
-*/
-    bl_evict = find_block_to_evict(set_indx);
-    printf("blk: %d one to evict     ", bl_evict);
-    printf("evict tag %llu     ", my_cache[set_indx].my_set[bl_evict].tag);
-    printf("evict lru %d  ", my_cache[set_indx].my_set[bl_evict].lru);
-    printf("evict valid bit  %d  ", my_cache[set_indx].my_set[bl_evict].valid_bit);
-   // printf("evict time %jd     ", my_cache[set_indx].my_set[bl_evict].time);
-
-    if(my_cache[set_indx].my_set[bl_evict].valid_bit ==1 ){ //having == 1 causing error
-        evictions++;
-        printf("evicting occuring lru %d  ", my_cache[set_indx].my_set[bl_evict].lru);
-        printf("evicting occuring valid bit  %d  ", my_cache[set_indx].my_set[bl_evict].valid_bit);
-        printf("evicting tag %llu     ", my_cache[set_indx].my_set[bl_evict].tag);
-       // printf("evicting time %jd     ", my_cache[set_indx].my_set[bl_evict].time);
-        printf("EVICT    ");
+    if(my_cache[set_indx].my_set[evict_idx].valid_bit ==1 ){ //if the idx to evict has a valid bit evict 
+        evictions++; //increment evictions 
     }
     
-    my_cache[set_indx].my_set[bl_evict].tag = tag;
-    my_cache[set_indx].my_set[bl_evict].lru = counter++;
-   // my_cache[set_indx].my_set[bl_evict].time = clock();
-    my_cache[set_indx].my_set[bl_evict].valid_bit = 1;
+    my_cache[set_indx].my_set[evict_idx].tag = tag;   //assign tag, counter incremented and valid bit to 1 for the idx to be evicted
+    my_cache[set_indx].my_set[evict_idx].lru = counter++;
+    my_cache[set_indx].my_set[evict_idx].valid_bit = 1;
     
 }
 
- //valid bit always true 
 
 
-    //miss++;
-   // for(int j = 0; j < associativity; j++){
-    //    if(my_cache[set_indx].my_set[j].lru ){ //if was most rtesently used evict it 
-
-
-     //   }
-    //}
-/*
-    if(bl_empty > -1){ 
-       
-        miss++;
-        //counter++;
-        my_cache[set_indx].my_set[bl_empty].tag = tag;
-        my_cache[set_indx].my_set[bl_empty].valid_bit = 1; //one to avoid error message
-        my_cache[set_indx].my_set[bl_empty].lru = counter;
-        counter++;
-        return;
-        //return 1; 
-    }
-    
-    else{ //set is full need to evict
-        miss++;
-        my_cache[set_indx].my_set[bl_evict].tag = tag;
-        my_cache[set_indx].my_set[bl_evict].lru = counter;
-        counter++;
-        evictions++;
-        //return;
-        //return 2; //bc miss and eviction
-    }
-
-
-}
-
-*/
-
-
-
-
+//the purpose of this function is to determine the idxk to be evicted given the set index the function loops through and determines the idx with the lowest possible counter value or lru and returns the index of that value
 int find_block_to_evict(unsigned long long set_index){
+
 unsigned long long set_indx = set_index;
-//clock_t lru_to_evict = my_cache[set_indx].my_set[0].time;
 int lru_to_evict = INT_MAX;
-int bl_evict =0;
+int evict_idx = 0;
 int j;
 
-    for(j = 0; j < ass; j++){ //bc ass is 1?
-        if(lru_to_evict > my_cache[set_indx].my_set[j].lru){   //its because if less than 1 it can only be zero 
-            bl_evict = j;
-           // printf("blk: %d one to evict     ", bl_evict);
-           // printf("evict tag %llu     ", my_cache[set_indx].my_set[j].tag);
-           // printf("evict time %jd     ", my_cache[set_indx].my_set[j].time);
-         //   printf("evict lru %d  ", my_cache[set_indx].my_set[j].lru);
-           // printf("evict valid bit  %d  ", my_cache[set_indx].my_set[j].valid_bit);
-            lru_to_evict = my_cache[set_indx].my_set[j].lru; //im setting t
+    for(j = 0; j < ass; j++){ //get the idx in that set with the lowest possible counter 
+        if(lru_to_evict > my_cache[set_indx].my_set[j].lru){  //if lru to evict is greater than j lru value 
+            evict_idx = j; //the one to evict is j
+            lru_to_evict = my_cache[set_indx].my_set[j].lru;  
         }
     }
-    return bl_evict;
+    return evict_idx; //return index to be evicted
 }
 
 //this is the main control center of the program, intially the getopt function is used to determine and set the relevant information for the file that will be read in 
 //after that the values read in are sent to create cache to form a cache specific to these requirements, after that the tracefile is sent to 
-int main(int argc, char **argv)  //int is number of args char is strings part of that arg list (list of strings bascvially) 
+int main(int argc, char **argv)
 {
+    //attributes to be read in
     int set_bits = 0;
     int associativity = 0;
     int offset_bits = 0;
@@ -332,7 +234,7 @@ int main(int argc, char **argv)  //int is number of args char is strings part of
 
         opt = getopt(argc, argv, "vhs:E:b:t:"); //looks at argv and tries to match it with one of those things if found opt gives letter that first found
         
-        if (opt == -1)
+        if (opt == -1) //if it fails break loop
         {
             break;
         }
@@ -340,20 +242,19 @@ int main(int argc, char **argv)  //int is number of args char is strings part of
         switch(opt)
         {
             case 's':
-                set_bits = atoi(optarg); //opt agrv var created wtih get opt, this is string, atoi turns strong to int if possible
-                set_bit = set_bits;
+                set_bits = atoi(optarg); //atoi turns strong to int if possible
+                set_bit = set_bits; //assign to global var for use outside of main
                 break;
             case 'E':
-                associativity = atoi(optarg);
-                ass = associativity;
+                associativity = atoi(optarg);//atoi turns strong to int if possible
+                ass = associativity;//assign to global var for use outside of main
                 break;
             case 'b':
-                offset_bits = atoi(optarg);
-                off_bits = offset_bits;
+                offset_bits = atoi(optarg);//atoi turns strong to int if possible
+                off_bits = offset_bits;//assign to global var for use outside of main
                 break;
             case 't':
                 trace_file = optarg;
-                
                 break;
             default:
                 break;
@@ -361,23 +262,12 @@ int main(int argc, char **argv)  //int is number of args char is strings part of
 
     }
 
-   //printf("%d, %d, %d, %s\n", set_bits, associativity, offset_bits, trace_file);
 
-    create_cache(set_bits, associativity, offset_bits);
+    create_cache(set_bits, associativity, offset_bits); //initialize the cache with the read in requirements
 
-   // printf("%d, %d, %d, %s\n", set_bits, associativity, offset_bits, trace_file);
-    read_trace_file(trace_file);
+    read_trace_file(trace_file); //send the tracefile to read trace
 
-    printSummary(hits, miss, evictions);
+    printSummary(hits, miss, evictions); //print the results
     return 0;
 }
 
-
-//need function to scan and opt through trace file
-//functions to modify cache
-//insert 
-//modify
-//delete
-//mechanism to keep tack of hits misses and evictions
-
-//need to figure out based on addrerss where it should go and based on size how much size it should take up
